@@ -1,0 +1,434 @@
+.metrics-section {
+    margin-bottom: 30px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.metric-card {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    animation: slideIn 0.5s ease;
+    position: relative;
+    border-left: 4px solid var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-lg);
+}
+
+/* Cores das bordas para cada métrica */
+.metric-card:nth-child(1) {
+    border-left-color: var(--primary);
+}
+
+.metric-card:nth-child(2) {
+    border-left-color: var(--success);
+}
+
+.metric-card:nth-child(3) {
+    border-left-color: var(--info);
+}
+
+.metric-card:nth-child(4) {
+    border-left-color: var(--warning);
+}
+
+.metric-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+/* Cores dos ícones com gradiente */
+.metric-card:nth-child(1) .metric-icon {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+}
+
+.metric-card:nth-child(2) .metric-icon {
+    background: linear-gradient(135deg, var(--success), #34d399);
+}
+
+.metric-card:nth-child(3) .metric-icon {
+    background: linear-gradient(135deg, var(--info), #06b6d4);
+}
+
+.metric-card:nth-child(4) .metric-icon {
+    background: linear-gradient(135deg, var(--warning), #f59e0b);
+}
+
+.metric-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.metric-info h3 {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1;
+    font-feature-settings: "tnum";
+}
+
+.metric-trend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.metric-trend.positive {
+    color: var(--success);
+}
+
+.metric-trend.negative {
+    color: var(--error);
+}
+
+.metric-trend i {
+    font-size: 0.7rem;
+}
+
+/* Badge para destaque (opcional) */
+.metric-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--primary);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* Layout responsivo */
+@media (max-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .metric-card {
+        padding: 20px;
+        gap: 12px;
+    }
+    
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.4rem;
+    }
+    
+    .metric-value {
+        font-size: 1.8rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1025px) {
+    .metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Animações de entrada */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.metric-card:nth-child(1) { animation-delay: 0.1s; }
+.metric-card:nth-child(2) { animation-delay: 0.2s; }
+.metric-card:nth-child(3) { animation-delay: 0.3s; }
+.metric-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Estados de loading */
+.metric-card.loading .metric-value {
+    color: var(--gray-400);
+}
+
+.metric-card.loading .metric-trend {
+    color: var(--gray-400);
+}
+
+/* Efeitos de destaque para métricas importantes */
+.metric-card.highlight {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, rgba(37, 99, 235, 0.03) 100%);
+    border-left-width: 6px;
+}
+
+/* Versão compacta para espaços menores */
+.metrics-grid.compact {
+    gap: 12px;
+}
+
+.metrics-grid.compact .metric-card {
+    padding: 16px;
+}
+
+.metrics-grid.compact .metric-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.2rem;
+}
+
+.metrics-grid.compact .metric-value {
+    font-size: 1.6rem;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Estilos para a visualização em cards */
+.cards-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.client-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.client-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.client-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.client-info {
+    flex: 1;
+}
+
+.client-info h3 {
+    margin: 0 0 5px 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.client-document {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.card-header .status-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.card-body {
+    margin-bottom: 15px;
+}
+
+.contact-info p,
+.location-info p {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.contact-info i,
+.location-info i {
+    width: 16px;
+    color: var(--text-secondary);
+}
+
+.client-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.meta-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.meta-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.card-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.card-actions .btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+}
+
+/* Responsividade para cards */
+@media (max-width: 768px) {
+    .cards-view {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .client-meta {
+        grid-template-columns: 1fr;
+    }
+    
+    .card-actions {
+        flex-direction: column;
+    }
+}
+
+/* Notificações */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid var(--primary-color);
+    z-index: 1000;
+    max-width: 400px;
+}
+
+.notification-success {
+    border-left-color: var(--success-color);
+}
+
+.notification-error {
+    border-left-color: var(--error-color);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification-content i {
+    font-size: 1.2rem;
+}
+
+.notification-success .notification-content i {
+    color: var(--success-color);
+}
+
+.notification-error .notification-content i {
+    color: var(--error-color);
+}

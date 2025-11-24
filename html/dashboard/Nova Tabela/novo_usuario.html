@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Simplificado - Novo Usuário</title>
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="css/usuarios.css">
+          <link rel="icon" type="image/png" href="imagens/favicon.png">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+</head>
+<body>    
+    
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" role="navigation" aria-label="Navegação principal">
+            <div class="sidebar-header">
+                <div class="logo" aria-label="Logo da empresa">
+                    <div class="logo-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h1>NexoERP</h1>
+                </div>
+                <button class="sidebar-toggle" aria-label="Alternar menu" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item">
+                        <a href="../index.html" data-tooltip="Dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="../usuarios.html" aria-current="page" data-tooltip="Usuários">
+                            <i class="fas fa-users"></i>
+                            <span>Usuários</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../clientes.html" data-tooltip="Clientes">
+                            <i class="fas fa-address-book"></i>
+                            <span>Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../produtos.html" data-tooltip="Produtos">
+                            <i class="fas fa-box-open"></i>
+                            <span>Produtos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../vendas.html" data-tooltip="Vendas">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Vendas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../estoque.html" data-tooltip="Estoque">
+                            <i class="fas fa-warehouse"></i>
+                            <span>Estoque</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../relatorios.html" data-tooltip="Relatórios">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Relatórios</span>
+                        </a>
+                    </li>
+                  
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                   
+                    
+                </div>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <div class="main-content" id="main-content">
+            <!-- Header -->
+            <header class="header" role="banner" aria-label="Cabeçalho do sistema">
+                <div class="header-left">
+                    <button class="menu-toggle" aria-label="Alternar menu" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+                        <span class="theme-icon">
+                            <i class="fas fa-sun"></i>
+                            <i class="fas fa-moon"></i>
+                        </span>
+                    </button>
+                    
+                 
+                    <div class="user-menu">
+                        <div class="user-info">
+                            <p><strong>Última atualização:</strong> <span id="lastAccess"></span></p>
+                        </div>
+                        <div class="user-dropdown">
+                            <button class="user-dropdown-btn" aria-expanded="false" id="userDropdownBtn">
+                                <div class="user-avatar small">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar do usuário">
+                                </div>
+                                <span id="headerUserName">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                         <div class="dropdown-menu" id="userDropdown">
+                            <a href="dropdown/perfil.html"><i class="fas fa-user"></i> Perfil</a>
+                            <a href="dropdown/configuracoes.html"><i class="fas fa-cog"></i> Configurações</a>
+                            <a href="./../login/login.html"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>   
+
+        <!-- Conteúdo Principal -->
+        <main class="content">
+            <div class="page-header">
+            </div>
+
+<form id="user-form" class="form-card">
+    <div class="form-group">
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" required placeholder="Digite o nome completo">
+    </div>
+    
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" required placeholder="exemplo@email.com">
+    </div>
+    
+    <div class="form-group password-group">
+        <label for="senha">Senha:</label>
+        <input type="password" id="senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+        <button type="button" class="toggle-password" onclick="togglePassword()" aria-label="Mostrar senha">
+            👁️
+        </button>
+    </div>
+    
+    <div class="form-group">
+        <label for="telefone">Telefone:</label>
+        <input type="tel" id="telefone" placeholder="(11) 99999-9999">
+    </div>
+    
+    <div class="form-group">
+        <label for="cpf">CPF:</label>
+        <input type="text" id="cpf" placeholder="123.456.789-00">
+    </div>
+    
+    <div class="form-group">
+    <label for="datadeNascimento">Data de Nascimento</label>
+    <input type="date" id="datadeNascimento" name="datadeNascimento">
+    <small class="form-text">O sistema converterá automaticamente</small>
+</div>
+
+    <div class="form-group">
+        <label for="endereco">Endereço:</label>
+        <textarea id="endereco" placeholder="Rua, número, complemento, cidade - Estado" rows="3"></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label for="perfil">Perfil:</label>
+        <select id="perfil" required>
+            <option value="">Selecione um perfil...</option>
+            <option value="Admin">Administrador</option>
+            <option value="Operador">Operador</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="status">Status:</label>
+        <select id="status" required>
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+        </select>
+    </div>
+    
+    <div id="errorMsg" class="error-message" style="display: none;"></div>
+    <div id="successMsg" class="success-message" style="display: none;"></div>
+    
+    <button type="submit">Cadastrar Usuário</button>
+</form>
+
+    <script src="js tabelas/usuarios.js"></script>
+    <script src="../js/funcoesui.js"></script>
+</body>
+</html>

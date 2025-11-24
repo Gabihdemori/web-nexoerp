@@ -1,0 +1,466 @@
+/* ============================================= */
+/* FORMULÁRIO DE VENDAS - DESIGN CORRIGIDO */
+/* ============================================= */
+
+/* CORREÇÃO: Espaçamento do header e centralização */
+.main-content {
+    padding: 5rem 2rem 2rem 2rem; /* Mais espaço no topo para o header */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    margin: 0 auto;
+    max-width: 1200px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* CORREÇÃO: Form card centralizado e com largura adequada */
+.form-card {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 2.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 
+        0 8px 30px rgba(0, 0, 0, 0.08),
+        0 2px 10px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    margin: 0 auto;
+    backdrop-filter: blur(5px);
+    box-sizing: border-box;
+}
+
+/* ==================== LAYOUT COMPACTO ==================== */
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* ==================== ESTILOS COM FONTE MAIOR ==================== */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-group label::before {
+    content: '•';
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+/* ==================== CAMPOS COM FONTE MAIOR ==================== */
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.15s ease;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    height: 3rem;
+}
+
+.form-group textarea {
+    height: auto;
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.5;
+    font-size: 1rem;
+    padding: 1rem;
+}
+
+/* Efeito de foco minimalista */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* ==================== SELECT COM FONTE MAIOR ==================== */
+
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.2rem;
+    padding-right: 3rem;
+    font-size: 1rem;
+}
+
+/* ==================== SEÇÃO DE ITENS DA VENDA ==================== */
+
+.items-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--gray-50);
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.sale-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.item-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    align-items: center;
+}
+
+.item-row select,
+.item-row input {
+    padding: 0.875rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    font-size: 1rem;
+    height: 3rem;
+    width: 100%;
+}
+
+.item-stock {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+    font-weight: 500;
+}
+
+.item-total {
+    font-weight: 600;
+    color: var(--success);
+    text-align: center;
+    font-size: 1rem;
+}
+
+.remove-item {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    background: var(--error);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.remove-item:hover {
+    background: var(--error-dark);
+    transform: translateY(-1px);
+}
+
+/* ==================== BOTÃO ADICIONAR ITEM ==================== */
+
+#add-item {
+    background: var(--gray-100);
+    color: var(--text-primary);
+    border: 1px solid var(--gray-300);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+#add-item:hover {
+    background: var(--gray-200);
+    border-color: var(--gray-400);
+    transform: translateY(-1px);
+}
+
+/* ==================== SEÇÃO DE TOTAIS ==================== */
+
+.totals-section {
+    background: var(--gray-50);
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 2.5rem 0;
+    border-left: 4px solid var(--primary);
+}
+
+.totals-section .form-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 0;
+    align-items: end;
+}
+
+.total-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--gray-300);
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    padding: 1rem;
+    height: 3.5rem;
+}
+
+.total-input.final {
+    border-color: var(--success);
+    background: var(--success-light);
+    color: var(--success-dark);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.total-input.discount {
+    border-color: var(--warning);
+    background: var(--warning-light);
+    color: var(--warning-dark);
+    font-size: 1rem;
+}
+
+.discount-input {
+    border: 1px solid var(--gray-300);
+    text-align: center;
+    font-weight: 500;
+    font-size: 1.1rem;
+    padding: 1rem;
+    height: 3.5rem;
+}
+
+/* ==================== BOTÕES DE AÇÃO CENTRALIZADOS ==================== */
+
+.form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 2.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn {
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    min-width: 160px;
+    justify-content: center;
+}
+
+.btn-secondary {
+    background: var(--gray-100);
+    color: var(--text-primary);
+    border: 1px solid var(--gray-300);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-200);
+    border-color: var(--gray-400);
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    box-shadow: 
+        0 4px 15px rgba(37, 99, 235, 0.2),
+        0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(37, 99, 235, 0.3),
+        0 3px 10px rgba(37, 99, 235, 0.2);
+}
+
+/* ==================== CORREÇÕES DE RESPONSIVIDADE ==================== */
+
+@media (max-width: 1024px) {
+    .main-content {
+        padding: 6rem 1.5rem 1.5rem 1.5rem;
+    }
+    
+    .form-card {
+        padding: 2rem;
+        max-width: 100%;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .totals-section .form-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 5rem 1rem 1rem 1rem;
+    }
+    
+    .form-card {
+        padding: 1.5rem;
+        border-radius: 10px;
+    }
+    
+    .items-header,
+    .item-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .items-header span,
+    .item-row > * {
+        width: 100%;
+    }
+    
+    .totals-section .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 0.875rem;
+        font-size: 16px;
+        border-radius: 8px;
+        height: 3rem;
+    }
+    
+    .form-group textarea {
+        min-height: 100px;
+    }
+    
+    .btn {
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+        min-width: 140px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 4rem 0.75rem 0.75rem 0.75rem;
+    }
+    
+    .form-card {
+        padding: 1.25rem;
+        gap: 1.25rem;
+    }
+    
+    .form-group label {
+        font-size: 0.95rem;
+    }
+    
+    .item-row {
+        padding: 1rem;
+    }
+    
+    .totals-section {
+        padding: 1.5rem;
+    }
+    
+    .items-header {
+        font-size: 0.9rem;
+        padding: 1rem;
+    }
+    
+    .btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* ==================== CORREÇÃO EXTRA PARA HEADER FIXO ==================== */
+
+/* Se o header for fixo, adicione esta regra */
+.header-fixed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+/* Ajuste o padding-top do main-content baseado na altura do header */
+.header-fixed ~ .main-content {
+    padding-top: 80px; /* Ajuste conforme a altura do seu header */
+}
+
+/* Remove animações para máxima compactação */
+.form-group,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.btn,
+.remove-item,
+#add-item {
+    animation: none;
+}

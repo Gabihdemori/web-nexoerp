@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoERP - Nova Venda</title>    
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="css/venda.css">
+    <link rel="icon" type="image/png" href="imagens/favicon.png">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+
+<body>
+   
+     
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" role="navigation" aria-label="Navegação principal">
+            <div class="sidebar-header">
+                <div class="logo" aria-label="Logo da empresa">
+                    <div class="logo-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h1>NexoERP</h1>
+                </div>
+                <button class="sidebar-toggle" aria-label="Alternar menu" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item">
+                        <a href="../index.html" data-tooltip="Dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../usuarios.html" data-tooltip="Usuários">
+                            <i class="fas fa-users"></i>
+                            <span>Usuários</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../clientes.html" data-tooltip="Clientes">
+                            <i class="fas fa-address-book"></i>
+                            <span>Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../produtos.html" data-tooltip="Produtos">
+                            <i class="fas fa-box-open"></i>
+                            <span>Produtos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="../vendas.html" aria-current="page" data-tooltip="Vendas">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Vendas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../estoque.html" data-tooltip="Estoque">
+                            <i class="fas fa-warehouse"></i>
+                            <span>Estoque</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../relatorios.html" data-tooltip="Relatórios">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Relatórios</span>
+                        </a>
+                    </li>
+                    
+                    </li>
+                </ul>
+            </nav>
+
+                    <div class="sidebar-footer">
+                <div class="user-profile">
+                   
+                    
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content" id="main-content">
+            <!-- Header -->
+            <header class="header" role="banner" aria-label="Cabeçalho do sistema">
+                <div class="header-left">
+                    <button class="menu-toggle" aria-label="Alternar menu" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+                        <span class="theme-icon">
+                            <i class="fas fa-sun"></i>
+                            <i class="fas fa-moon"></i>
+                        </span>
+                    </button>
+                    
+
+                      <div class="user-menu">
+                        <div class="user-info">
+                            <p><strong>Última atualização:</strong> <span id="lastAccess"></span></p>
+                        </div>
+                        <div class="user-dropdown">
+                            <button class="user-dropdown-btn" aria-expanded="false" id="userDropdownBtn">
+                                <div class="user-avatar small">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar do usuário">
+                                </div>
+                                <span id="headerUserName">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                         <div class="dropdown-menu" id="userDropdown">
+                            <a href="dropdown/perfil.html"><i class="fas fa-user"></i> Perfil</a>
+                            <a href="dropdown/configuracoes.html"><i class="fas fa-cog"></i> Configurações</a>
+                            <a href="./../login/login.html"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>   
+
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <div class="form-card">
+                <form id="sale-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cliente">Cliente *</label>
+                            <select id="cliente" name="cliente" required>
+                                <option value="">Selecione um cliente</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="data">Data *</label>
+                            <input type="date" id="data" name="data" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label>Itens da Venda *</label>
+                            <div class="items-header">
+                                <span>Produto</span>
+                                <span>Quantidade</span>
+                                <span>Preço Unit.</span>
+                                <span>Estoque</span>
+                                <span>Total</span>
+                                <span>Ação</span>
+                            </div>
+                            <div class="sale-items">
+                                <!-- Itens serão adicionados dinamicamente aqui -->
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="add-item">
+                                <i class="fas fa-plus"></i> Adicionar Item
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- NOVA SEÇÃO: RESUMO DOS TOTAIS -->
+                    <div class="totals-section">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="subtotal">Subtotal</label>
+                                <input type="text" id="subtotal" value="R$ 0,00" readonly class="total-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="desconto">Desconto (%)</label>
+                                <input type="number" id="desconto" min="0" max="100" step="0.01" value="0" class="discount-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="desconto-valor">Valor do Desconto</label>
+                                <input type="text" id="desconto-valor" value="R$ 0,00 (0%)" readonly class="total-input discount">
+                            </div>
+                            <div class="form-group">
+                                <label for="total">Total da Venda</label>
+                                <input type="text" id="total" name="total" value="R$ 0,00" readonly class="total-input final">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="observacoes">Observações</label>
+                            <textarea id="observacoes" name="observacoes" rows="3" placeholder="Observações sobre a venda..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="window.location.href='vendas.html'">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check"></i> Finalizar Venda
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <!-- Rodapé -->
+
+
+    <script src="js tabelas/venda.js"></script>
+    <script src="../js/funcoesui.js"></script>
+
+</body>
+</html>
+
+
+

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoERP - Novo Produto</title>
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="css/usuarios.css">
+    <link rel="icon" type="image/png" href="imagens/favicon.png">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+</head>
+<body>
+      <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" role="navigation" aria-label="Navegação principal">
+            <div class="sidebar-header">
+                <div class="logo" aria-label="Logo da empresa">
+                    <div class="logo-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h1>NexoERP</h1>
+                </div>
+                <button class="sidebar-toggle" aria-label="Alternar menu" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item">
+                        <a href="../index.html" data-tooltip="Dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../usuarios.html" data-tooltip="Usuários">
+                            <i class="fas fa-users"></i>
+                            <span>Usuários</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../lientes.html" data-tooltip="Clientes">
+                            <i class="fas fa-address-book"></i>
+                            <span>Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item active">
+                        <a href="../produtos.html" aria-current="page" data-tooltip="Produtos">
+                            <i class="fas fa-box-open"></i>
+                            <span>Produtos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../vendas.html" data-tooltip="Vendas">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Vendas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../estoque.html" data-tooltip="Estoque">
+                            <i class="fas fa-warehouse"></i>
+                            <span>Estoque</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../relatorios.html" data-tooltip="Relatórios">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Relatórios</span>
+                        </a>
+                    </li>
+                   
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                   
+                    
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content" id="main-content">
+            <!-- Header -->
+            <header class="header" role="banner" aria-label="Cabeçalho do sistema">
+                <div class="header-left">
+                    <button class="menu-toggle" aria-label="Alternar menu" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+                        <span class="theme-icon">
+                            <i class="fas fa-sun"></i>
+                            <i class="fas fa-moon"></i>
+                        </span>
+                    </button>
+                    
+                 
+                    
+
+                    <div class="user-menu">
+                        <div class="user-info">
+                            <p><strong>Última atualização:</strong> <span id="lastAccess"></span></p>
+                        </div>
+                        <div class="user-dropdown">
+                            <button class="user-dropdown-btn" aria-expanded="false" id="userDropdownBtn">
+                                <div class="user-avatar small">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar do usuário">
+                                </div>
+                                <span>Admin</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-menu" id="userDropdown">
+                                <a href="#"><i class="fas fa-user"></i> Perfil</a>
+                                <a href="#"><i class="fas fa-cog"></i> Configurações</a>
+                                <a href="#"><i class="fas fa-question-circle"></i> Ajuda</a>
+                                <div class="dropdown-divider"></div>
+                                <a href="#"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+        <!-- Conteúdo Principal -->
+        <main class="content">
+            <div class="page-header">
+                <h2>Novo Produto</h2>
+            </div>
+<div class="form-card">
+    <form id="product-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="nome">Nome</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
+            <div class="form-group">
+                <label for="preco">Preço (R$)</label>
+                <input type="number" id="preco" name="preco" step="0.01" min="0" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="estoque">Estoque</label>
+                <input type="number" id="estoque" name="estoque" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="tipo">Tipo</label>
+                <select id="tipo" name="tipo" required>
+                    <option value="">Selecione</option>
+                    <option value="Produto">Produto</option>
+                    <option value="Servico">Serviço</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" required>
+                    <option value="">Selecione</option>
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label for="descricao">Descrição</label>
+                <textarea id="descricao" name="descricao" rows="3"></textarea>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='produtos.html'">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+    </form>
+</div>
+
+        </main>
+
+        <!-- Rodapé -->
+        <footer class="footer">
+            <p>ERP Simplificado © 2025 - Versão 1.6</p>
+            <p>Sistema desenvolvido para pequenas e médias empresas</p>
+        </footer>
+    </div>
+    <script src="js tabelas/produtos.js"></script>
+    <script src="../js/funcoesui.js"></script>
+</body>
+</html>

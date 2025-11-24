@@ -1,0 +1,159 @@
+/* ============================================= */
+/* FORMULÁRIO DE CLIENTES - ULTRA COMPACTO 13 CAMPOS */
+/* ============================================= */
+
+.form-card {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border-color);
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.06),
+        0 1px 4px rgba(0, 0, 0, 0.04);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.55rem 0.9rem;
+    align-items: start;
+    max-width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+    min-height: 0;
+}
+
+/* Campos grandes ocupam toda a linha */
+.form-group textarea,
+.form-actions,
+.form-group#observacoes-group {
+    grid-column: 1 / -1;
+}
+
+/* ==================== CAMPOS ==================== */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    line-height: 1;
+}
+
+.form-group label::before {
+    content: '•';
+    color: var(--primary);
+    font-size: 0.85rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--gray-200);
+    border-radius: 5px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    height: 2rem;
+    transition: border-color 0.15s ease;
+}
+
+.form-group textarea {
+    height: auto;
+    min-height: 45px;
+    resize: vertical;
+}
+
+/* Foco */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.07);
+}
+
+/* ==================== SELECT ==================== */
+
+.form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 0.9rem;
+    padding-right: 1.8rem;
+}
+
+/* ==================== BOTÕES ==================== */
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+}
+
+.btn {
+    border: none;
+    border-radius: 6px;
+    padding: 0.55rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    height: 2.1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+}
+
+.btn-secondary {
+    background: var(--gray-100);
+    color: var(--text-secondary);
+    border: 1px solid var(--gray-300);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-200);
+}
+
+/* ==================== RESPONSIVIDADE ==================== */
+
+@media (max-width: 1280px) {
+    .form-card {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem 0.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-card {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+        padding: 0.8rem;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

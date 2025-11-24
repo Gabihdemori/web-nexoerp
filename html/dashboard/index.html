@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoERP - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../../css/dashboard.css">
+    <link rel="stylesheet" href="../../css/gráfico.css">
+    <link rel="icon" 
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏢%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="description" content="Sistema ERP completo para gestão de negócios">
+
+</head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<body>    
+    
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" role="navigation" aria-label="Navegação principal">
+            <div class="sidebar-header">
+                </button>
+                <div class="logo" aria-label="Logo da empresa">
+                    <div class="logo-icon">
+                        <i class="fas fa-project-diagram"></i>
+                        </button>
+                    </div>
+                    <h1>NexoERP</h1>
+                </div>
+                <button class="sidebar-toggle" aria-label="Alternar menu" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active">
+                        <a href="index.html" aria-current="page" data-tooltip="Dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="usuarios.html" data-tooltip="Usuários">
+                            <i class="fas fa-users"></i>
+                            <span>Usuários</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="clientes.html" data-tooltip="Clientes">
+                            <i class="fas fa-address-book"></i>
+                            <span>Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="produtos.html" data-tooltip="Produtos">
+                            <i class="fas fa-box-open"></i>
+                            <span>Produtos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="vendas.html" data-tooltip="Vendas">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Vendas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="estoque.html" data-tooltip="Estoque">
+                            <i class="fas fa-warehouse"></i>
+                            <span>Estoque</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="relatorios.html" data-tooltip="Relatórios">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Relatórios</span>
+                        </a>
+                    </li>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                   
+                    
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content" id="main-content">
+            <!-- Header -->
+            <header class="header" role="banner" aria-label="Cabeçalho do sistema">
+                <div class="header-left">
+                    <button class="menu-toggle" aria-label="Alternar menu" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+                        <span class="theme-icon">
+                            <i class="fas fa-sun"></i>
+                            <i class="fas fa-moon"></i>
+                        </span>
+                    </button>
+                                       
+                    <div class="user-menu">
+                        <div class="user-info">
+                            <p><strong>Última atualização:</strong> <span id="lastAccess"></span></p>
+                        </div>
+                        <div class="user-dropdown">
+                            <button class="user-dropdown-btn" aria-expanded="false" id="userDropdownBtn">
+                                <div class="user-avatar small">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar do usuário">
+                                </div>
+                                <span id="headerUserName"></span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                         <div class="dropdown-menu" id="userDropdown">
+                            <a href="dropdown/perfil.html"><i class="fas fa-user"></i> Perfil</a>
+                            <a href="dropdown/configuracoes.html"><i class="fas fa-cog"></i> Configurações</a>
+                            <a href="./../login/login.html"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                            </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <main class="content" role="main">
+                <div class="page-header">
+                    <h1>Olá, <span id="username-display">Bem-vindo de volta!</span></h1>
+                    <p class="page-subtitle">Sua central de controle do NexoERP está pronta para você.</p>
+                </div>
+
+                <div class="dashboard-content">
+                    <!-- Metrics Section -->
+                    <section class="metrics-section" aria-labelledby="metrics-heading">
+                        <h2 id="metrics-heading" class="sr-only">Métricas do Sistema</h2>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-icon">
+                                    <i class="fas fa-sack-dollar"></i>
+                                </div>
+                                <div class="metric-info">
+                                    <h3>Vendas do Dia</h3>
+                                    <p class="metric-value">R$ <span id="daily-sales-value">0,00</span></p>
+                                    <div class="metric-trend positive">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="metric-card">
+                                <div class="metric-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="metric-info">
+                                    <h3>Total de Clientes</h3>
+                                    <p class="metric-value"><span id="new-clients-value">0</span></p>
+                                    <div class="metric-trend positive">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="metric-card">
+                                <div class="metric-icon">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <div class="metric-info">
+                                    <h3>Total Produtos em Estoque</h3>
+                                    <p class="metric-value"><span id="stock-products-value">0</span></p>
+                                    <div class="metric-trend positive">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="metric-card">
+                                <div class="metric-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="metric-info">
+                                    <h3>Faturamento Mensal</h3>
+                                    <p class="metric-value">R$ <span id="monthly-revenue">0,00</span></p>
+                                    <div class="metric-trend positive">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Charts Section -->
+                     <section class="charts-section" aria-labelledby="charts-heading">
+    <h2 id="charts-heading" class="sr-only">Gráficos e Visualizações</h2>
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Desempenho de Vendas</h3>
+                <div class="chart-controls">
+                    <select class="chart-period" id="salesPeriod">
+                        <option value="week">Esta semana</option>
+                        <option value="month" selected>Este mês</option>
+                        <option value="quarter">Este trimestre</option>
+                        <option value="year">Este ano</option>
+                    </select>
+                    <button class="chart-option-btn" aria-label="Opções do gráfico">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div id="sales-chart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Vendas por região</h3>
+                <div class="chart-controls">
+                    <button class="chart-option-btn" aria-label="Opções do gráfico">
+                        <i class="fas fa-ellipsis-h"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div id="categories-chart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</section>  
+
+                    <!-- Quick Actions -->
+                    <section class="quick-actions" aria-labelledby="quick-actions-heading">
+                        <div class="section-header">
+                            <h2 id="quick-actions-heading">Ações Rápidas</h2>
+                        </div>
+                        <div class="actions-grid">
+                            <a href="vendas.html" class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <h3>Nova Venda</h3>
+                                <p>Registrar uma nova venda</p>
+                            </a>
+                            <a href="clientes.html" class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <h3>Adicionar Cliente</h3>
+                                <p>Cadastrar novo cliente</p>
+                            </a>
+                            <a href="produtos.html" class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <h3>Adicionar Produto</h3>
+                                <p>Cadastrar novo produto</p>
+                            </a>
+                            <a href="relatorios.html" class="action-card">
+                                <div class="action-icon">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                <h3>Gerar Relatório</h3>
+                                <p>Criar novo relatório</p>
+                            </a>
+                        </div>
+                    </section>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer" role="contentinfo">
+                <div class="footer-content">
+                    <div class="footer-info">
+                        <p>NexoERP © 2025 - Versão 1.6</p>
+                        <p>Sistema desenvolvido para pequenas e médias empresas</p>
+                    </div>
+                    <div class="footer-links">
+                        <a href="politica-privacidade.html">Política de Privacidade</a>
+                        <a href="termos-uso.html">Termos de Uso</a>
+                        <a href="suporte.html">Suporte</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div> 
+    
+    
+    <script src="js/script.js"></script>
+    <script src="js/funcoesui.js"></script>
+    
+</body>
+</html>

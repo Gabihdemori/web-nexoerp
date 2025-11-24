@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexoERP - Meu Perfil</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="imagens/favicon.png">
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="css/perfil.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏢%3C/text%3E%3C/svg%3E">
+</head>
+<body>    
+    
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" role="navigation" aria-label="Navegação principal">
+            <div class="sidebar-header">
+                <div class="logo" aria-label="Logo da empresa">
+                    <div class="logo-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h1>NexoERP</h1>
+                </div>
+                <button class="sidebar-toggle" aria-label="Alternar menu" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item">
+                        <a href="../index.html" data-tooltip="Dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar do usuário" id="sidebarAvatar">
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name" id="sidebarUserName">Carregando...</span>
+                        <span class="user-role" id="sidebarUserRole">Usuário</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content" id="main-content">
+            <!-- Header -->
+            <header class="header" role="banner" aria-label="Cabeçalho do sistema">
+                <div class="header-left">
+                    <button class="menu-toggle" aria-label="Alternar menu" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                        <span>Meu Perfil</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema claro/escuro">
+                        <span class="theme-icon">
+                            <i class="fas fa-sun"></i>
+                            <i class="fas fa-moon"></i>
+                        </span>
+                    </button>
+                    
+                    <div class="user-menu">
+                        <div class="user-info">
+                            <p><strong>Último acesso:</strong> <span id="lastAccess"></span></p>
+                        </div>
+                        <div class="user-dropdown">
+                            <button class="user-dropdown-btn" aria-expanded="false" id="userDropdownBtn">
+                                <div class="user-avatar small">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar do usuário" id="headerAvatar">
+                                </div>
+                                <span id="headerUserName">User</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-menu" id="userDropdown">
+                                <a href="../../login/login.html"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Conteúdo Principal do Perfil -->
+            <main class="content" role="main">
+                <div class="page-header">
+                    <h1>Meu Perfil</h1>
+                    <p class="page-subtitle">Visualize suas informações pessoais</p>
+                </div>
+
+                <div class="profile-container">
+                    <!-- Card de Informações Pessoais -->
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-user-circle"></i> Informações Pessoais</h2>
+                        </div>
+                        
+                        <div class="profile-content">
+                            <div class="avatar-section">
+                                <div class="avatar-display">
+                                    <div class="avatar-preview">
+                                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" alt="Avatar" id="profileAvatar">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-grid">
+                                <div class="info-group">
+                                    <label class="info-label">Nome Completo</label>
+                                    <div class="info-value" id="infoNome">Carregando...</div>
+                                </div>
+                                
+                                <div class="info-group">
+                                    <label class="info-label">E-mail</label>
+                                    <div class="info-value" id="infoEmail">Carregando...</div>
+                                </div>
+                                
+                                <div class="info-group">
+                                    <label class="info-label">Telefone</label>
+                                    <div class="info-value" id="infoTelefone">Carregando...</div>
+                                </div>
+                                
+                                <div class="info-group">
+                                    <label class="info-label">CPF</label>
+                                    <div class="info-value" id="infoCpf">Carregando...</div>
+                                </div>
+                                
+                                <div class="info-group">
+                                    <label class="info-label">Perfil</label>
+                                    <div class="info-value" id="infoPerfil">Carregando...</div>
+                                </div>
+                                
+                                <div class="info-group">
+                                    <label class="info-label">Data de Admissão</label>
+                                    <div class="info-value" id="infoDataAdmissao">Carregando...</div>
+                                </div>
+
+                                <div class="info-group">
+                                    <label class="info-label">Status</label>
+                                    <div class="info-value">
+                                        <span class="status-badge status-active">Ativo</span>
+                                    </div>
+                                </div>
+
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card de Estatísticas -->
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-bar"></i> Estatísticas</h2>
+                        </div>
+                        
+                        <div class="profile-content">
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" id="infoDiasTrabalhados">0</div>
+                                        <div class="stat-label">Dias trabalhados</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="">
+                                    <div class="">
+                                        <i class=""></i>
+                                    </div>
+                                    <div class="stat-info">
+                                       
+                                    </div>
+                                </div>
+                                
+                                <div class="">
+                                    <div class="">
+                                        <i class=""></i>
+                                    </div>
+                                    <div class="">
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card de Ações Rápidas -->
+                    <div class="profile-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-bolt"></i> Ações Rápidas</h2>
+                        </div>
+                        
+                        <div class="profile-content">
+                            <div class="actions-grid">
+                                <a href="configuracoes.html" class="action-btn">
+                                    <div class="action-icon">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <div class="action-text">
+                                        <strong>Alterar Senha</strong>
+                                        <span>Atualize sua senha de acesso</span>
+                                    </div>
+                                    <i class="fas fa-chevron-right action-arrow"></i>
+                                </a>
+                                
+                                
+                               
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer" role="contentinfo">
+                <div class="footer-content">
+                    <div class="footer-info">
+                        <p>NexoERP © 2025 - Versão 1.6</p>
+                        <p>Sistema desenvolvido para pequenas e médias empresas</p>
+                    </div>
+                    <div class="footer-links">
+                        <a href="politica-privacidade.html">Política de Privacidade</a>
+                        <a href="termos-uso.html">Termos de Uso</a>
+                        <a href="suporte.html">Suporte</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="../js/funcoesui.js"></script>
+    <script src="js/perfil.js"></script>
+</body>
+</html>

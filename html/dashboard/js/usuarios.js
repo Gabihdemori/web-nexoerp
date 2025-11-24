@@ -24,7 +24,7 @@ class UsuariosManager {
             this.mostrarLoading();
             
             console.log("=== DEBUG: Iniciando carregamento ===");
-            const response = await fetch('http://localhost:3000/api/usuarios');
+            const response = await fetch('https://api-nexoerp.vercel.app/api/usuarios');
             console.log("Response status:", response.status);
             
             const rawText = await response.text();

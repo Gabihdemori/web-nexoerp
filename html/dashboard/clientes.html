@@ -151,167 +151,167 @@
 
                 <!-- Métricas de Clientes -->
                 <section class="metrics-section">
-    <div class="metrics-grid">
-        <div class="metric-card">
-            <div class="metric-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="metric-info">
-                <h3>Total de Clientes</h3>
-                <p class="metric-value"><span id="totalClients">0</span></p>
-                <div class="metric-trend positive">
-                </div>
-            </div>
-        </div>
-        
-        <div class="metric-card">
-            <div class="metric-icon">
-                <i class="fas fa-user-check"></i>
-            </div>
-            <div class="metric-info">
-                <h3>Clientes Ativos</h3>
-                <p class="metric-value"><span id="activeClients">0</span></p>
-                <div class="metric-trend positive">
-                </div>
-            </div>
-        </div>
-        
-        <div class="metric-card">
-            <div class="metric-icon">
-                <i class="fas fa-calendar-plus"></i>
-            </div>
-            <div class="metric-info">
-                <h3>Novos Este Mês</h3>
-                <p class="metric-value"><span id="newThisMonth">0</span></p>
-                <div class="metric-trend positive">
-                </div>
-            </div>
-        </div>
-        
-        <div class="metric-card">
-            <div class="metric-icon">
-                <i class="fas fa-map-marker-alt"></i>
-            </div>
-            <div class="metric-info">
-                <h3>Cidades Diferentes</h3>
-                <p class="metric-value"><span id="differentCities">0</span></p>
-                <div class="metric-trend positive">
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-                <!-- Controles de Visualização -->
-               <div class="view-controls">
-    <div class="view-toggle">
-        <button class="view-btn active" data-view="table">
-            <i class="fas fa-table"></i> Tabela
-        </button>
-        <button class="view-btn" data-view="cards">
-            <i class="fas fa-th-large"></i> Cards
-        </button>
-    </div>
-
-    <div style="flex: 1;"></div>
-
-    <!-- Tipo vem antes de Itens por página -->
-    <div class="filter-group">
-        <label for="typeFilter">Tipo</label>
-        <select id="typeFilter" class="filter-select">
-            <option value="">Todos</option>
-            <option value="PF">Pessoa Física</option>
-            <option value="PJ">Pessoa Jurídica</option>
-        </select>
-    </div>
-
-    <div class="filter-group">
-        <label for="itemsPerPage">Itens por página:</label>
-        <select id="itemsPerPage" class="filter-select">
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-        </select>
-    </div>
-</div>
-
-                <!-- Filtros -->
-                <div class="filters-section">
-                    
-                    <div class="filters-grid">
-                        <div class="filter-group">
-                            <label for="searchFilter">Pesquisar</label>
-                            <input type="text" id="searchFilter" class="filter-input" placeholder="Nome, e-mail ou documento...">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Total de Clientes</h3>
+                        <p class="metric-value"><span id="totalClients">0</span></p>
+                        <div class="metric-trend positive">
                         </div>
-                        
-                      
-                        <div class="filter-group">
-                            <label for="cityFilter">Cidade</label>
-                            <select id="cityFilter" class="filter-select">
-                                <option value="">Todas</option>
-                            </select>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Clientes Ativos</h3>
+                        <p class="metric-value"><span id="activeClients">0</span></p>
+                        <div class="metric-trend positive">
                         </div>
-                        
                     </div>
                 </div>
-
-                <!-- Visualização em Tabela -->
-                <!-- Visualização em Tabela -->
-<div class="table-view" id="tableView">
-    <div class="table-container">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Cliente</th>
-                    <th>Documento</th>
-                    <th>Contato</th>
-                    <th>Localização</th>
-                    <th>Data Nasc.</th>
-                    <th>Criado em</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="clientsTableBody">
-                <!-- Dados carregados via JavaScript -->
-            </tbody>
-        </table>
-    </div>
-</div>
-                <!-- Visualização em Cards -->
-                <div class="cards-view" id="cardsView">
-                    <!-- Cards serão carregados via JavaScript -->
-                </div>
-
-                <!-- Paginação -->
-                <div class="pagination" id="pagination">
-                    <!-- Paginação será gerada via JavaScript -->
-                </div>
-            </main>
-
-            <!-- Footer -->
-            <footer class="footer" role="contentinfo">
-                <div class="footer-content">
-                    <div class="footer-info">
-                        <p>NexoERP © 2025 - Versão 1.6</p>
-                        <p>Sistema desenvolvido para pequenas e médias empresas</p>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-calendar-plus"></i>
                     </div>
-                    <div class="footer-links">
-                        <a href="politica-privacidade.html">Política de Privacidade</a>
-                        <a href="termos-uso.html">Termos de Uso</a>
-                        <a href="suporte.html">Suporte</a>
+                    <div class="metric-info">
+                        <h3>Novos Este Mês</h3>
+                        <p class="metric-value"><span id="newThisMonth">0</span></p>
+                        <div class="metric-trend positive">
+                        </div>
                     </div>
                 </div>
-            </footer>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Cidades Diferentes</h3>
+                        <p class="metric-value"><span id="differentCities">0</span></p>
+                        <div class="metric-trend positive">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+                        <!-- Controles de Visualização -->
+                    <div class="view-controls">
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="table">
+                    <i class="fas fa-table"></i> Tabela
+                </button>
+                <button class="view-btn" data-view="cards">
+                    <i class="fas fa-th-large"></i> Cards
+                </button>
+            </div>
+
+            <div style="flex: 1;"></div>
+
+            <!-- Tipo vem antes de Itens por página -->
+            <div class="filter-group">
+                <label for="typeFilter">Tipo</label>
+                <select id="typeFilter" class="filter-select">
+                    <option value="">Todos</option>
+                    <option value="PF">Pessoa Física</option>
+                    <option value="PJ">Pessoa Jurídica</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="itemsPerPage">Itens por página:</label>
+                <select id="itemsPerPage" class="filter-select">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
         </div>
-    </div>
 
-    <!-- Modal de Confirmação -->
+                        <!-- Filtros -->
+                        <div class="filters-section">
+                            
+                            <div class="filters-grid">
+                                <div class="filter-group">
+                                    <label for="searchFilter">Pesquisar</label>
+                                    <input type="text" id="searchFilter" class="filter-input" placeholder="Nome, e-mail ou documento...">
+                                </div>
+                                
+                            
+                                <div class="filter-group">
+                                    <label for="cityFilter">Cidade</label>
+                                    <select id="cityFilter" class="filter-select">
+                                        <option value="">Todas</option>
+                                    </select>
+                                </div>
+                                
+                            </div>
+                        </div>
 
-    <script src="js/clientes.js"></script>
-    <script src="js/funcoesui.js"></script>
+                        <!-- Visualização em Tabela -->
+                        <!-- Visualização em Tabela -->
+                <div class="table-view" id="tableView">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Documento</th>
+                                    <th>Contato</th>
+                                    <th>Localização</th>
+                                    <th>Data Nasc.</th>
+                                    <th>Criado em</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsTableBody">
+                                <!-- Dados carregados via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                                <!-- Visualização em Cards -->
+                                <div class="cards-view" id="cardsView">
+                            <!-- Cards serão carregados via JavaScript -->
+                        </div>
 
-</body>
-</html>
+                        <!-- Paginação -->
+                        <div class="pagination" id="pagination">
+                            <!-- Paginação será gerada via JavaScript -->
+                        </div>
+                    </main>
 
-       
+                    <!-- Footer -->
+                    <footer class="footer" role="contentinfo">
+                        <div class="footer-content">
+                            <div class="footer-info">
+                                <p>NexoERP © 2025 - Versão 1.6</p>
+                                <p>Sistema desenvolvido para pequenas e médias empresas</p>
+                            </div>
+                            <div class="footer-links">
+                                <a href="politica-privacidade.html">Política de Privacidade</a>
+                                <a href="termos-uso.html">Termos de Uso</a>
+                                <a href="suporte.html">Suporte</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+
+            <!-- Modal de Confirmação -->
+
+            <script src="js/clientes.js"></script>
+            <script src="js/funcoesui.js"></script>
+
+        </body>
+        </html>
+
+            

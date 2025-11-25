@@ -275,7 +275,7 @@ function renderTableView(clientes, totalClientes) {
             <tr>
                 <td colspan="7" class="empty-state">
                     <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                        <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <i class="" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                         <p style="font-size: 1.1rem; margin: 0;">Nenhum cliente encontrado</p>
                         <small style="font-size: 0.9rem;">Tente ajustar os filtros ou adicionar um novo cliente</small>
                     </div>
@@ -289,8 +289,8 @@ function renderTableView(clientes, totalClientes) {
         <tr>
             <td>
                 <div class="user-cell">
-                    <div class="user-avatar-small">
-                        <i class="fas fa-user"></i>
+                    <div class="">
+                        <i class=""></i>
                     </div>
                     <div class="user-info-small">
                         <div class="user-name">${escapeHtml(cliente.nome || 'Não informado')}</div>

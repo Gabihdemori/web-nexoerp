@@ -75,25 +75,29 @@ class VendasManager {
         }
     }
     formatarMoeda(valor) {
-        if (valor === null || valor === undefined || isNaN(valor)) return '0,00';
-        
-        return new Intl.NumberFormat('pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(parseFloat(valor));
-    }
+    if (valor === null || valor === undefined) return '0,00';
+    
+    const numero = parseFloat(valor);
+    if (isNaN(numero)) return '0,00';
+    
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(numero);
+}
 
-    // Converte string brasileira para número: "1.234,56" → 1234.56
+
     converterMoedaParaNumero(valorString) {
-        if (!valorString) return 0;
-        
-        // Remove pontos de milhar e substitui vírgula decimal por ponto
-        const valorNumerico = parseFloat(
-            valorString.replace(/\./g, '').replace(',', '.')
-        );
-        
-        return isNaN(valorNumerico) ? 0 : valorNumerico;
-    }
+    if (!valorString) return 0;
+    m();
+
+    valorLimpo = valorLimpo.replace(/\./g, '');
+  
+    valorLimpo = valorLimpo.replace(',', '.');
+    
+    const valorNumerico = parseFloat(valorLimpo);
+    return isNaN(valorNumerico) ? 0 : valorNumerico;
+}
 
     // ========== SISTEMA DE OBSERVAÇÕES NO LOCALSTORAGE ==========
     carregarObservacoes() {
@@ -494,124 +498,119 @@ class VendasManager {
     }
 
     renderizarCards(vendas) {
-        const container = document.getElementById('cardsView');
-        if (!container) return;
+    const container = document.getElementById('cardsView');
+    if (!container) return;
 
-        if (vendas.length === 0) {
-            container.innerHTML = `
-                <div class="no-data">
-                    <i class="fas fa-inbox"></i>
-                    <p>Nenhuma venda encontrada</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = vendas.map(venda => {
-            const observacaoLocal = this.obterObservacao(venda.id);
-            const temObservacaoLocal = observacaoLocal && observacaoLocal.trim() !== '';
-            const temObservacaoServidor = venda.observacoes && venda.observacoes.trim() !== '';
-            
-            return `
-                <div class="sale-card ${venda.total > 1000 ? 'high-value' : ''} ${temObservacaoLocal ? 'has-local-notes' : ''} ${temObservacaoServidor ? 'has-server-notes' : ''}">
-                    <div class="card-header">
-                        <h3>Venda #${venda.id}</h3>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            ${temObservacaoServidor ? `
-                                <span class="notes-indicator" title="Observações no servidor" style="color: #28a745; font-size: 0.8rem;">
-                                    <i class="fas fa-database"></i>
-                                </span>
-                            ` : ''}
-                            ${temObservacaoLocal ? `
-                                <span class="notes-indicator" title="Observações locais" style="color: #ffc107; font-size: 0.8rem;">
-                                    <i class="fas fa-sticky-note"></i>
-                                </span>
-                            ` : ''}
-                            <span class="status-badge status-${(venda.status || '').toLowerCase()}">
-                                ${this.getStatusText(venda.status)}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-info">
-                            <div class="info-item">
-                                <i class="fas fa-user"></i>
-                                <span><strong>Cliente:</strong> ${venda.cliente?.nome || 'N/A'}</span>
-                            </div>
-                            <div class="info-item">
-                                <i class="fas fa-user-tie"></i>
-                                <span><strong>Vendedor:</strong> ${venda.usuario?.nome || 'N/A'}</span>
-                            </div>
-                            <div class="info-item">
-                                <i class="fas fa-calendar"></i>
-                                <span><strong>Data:</strong> ${venda.data}</span>
-                            </div>
-                        </div>
-                        
-                        ${temObservacaoServidor ? `
-                        <div class="card-notes-preview server-notes">
-                            <strong><i class="fas fa-database"></i> Observação (Servidor):</strong>
-                            <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #28a745; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                                ${this.escapeHtml(venda.observacoes)}
-                            </p>
-                        </div>
-                        ` : ''}
-                        
-                        ${temObservacaoLocal ? `
-                        <div class="card-notes-preview local-notes">
-                            <strong><i class="fas fa-sticky-note"></i> Observação (Local):</strong>
-                            <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #666; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                                ${this.escapeHtml(observacaoLocal)}
-                            </p>
-                        </div>
-                        ` : ''}
-                        
-                        ${venda.itens && venda.itens.length > 0 ? `
-                        <div class="card-products">
-                            <strong>Produtos Vendidos:</strong>
-                            <ul>
-                                ${venda.itens.slice(0, 3).map(item => `
-                                    <li>
-                                        <span>${item.produto?.nome || 'Produto'}</span>
-                                        <span>${item.quantidade || 0}x - R$ ${this.formatarMoeda(item.precoUnit)}</span>
-                                    </li>
-                                `).join('')}
-                                ${venda.itens.length > 3 ? `
-                                    <li>
-                                        <span>+${venda.itens.length - 3} produtos</span>
-                                        <span>Ver todos</span>
-                                    </li>
-                                ` : ''}
-                            </ul>
-                        </div>
-                        ` : ''}
-                    </div>
-                    <div class="card-footer">
-                        <div class="card-total">
-                            Total: <span>R$ ${this.formatarMoeda(venda.total)}</span>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn-icon view-btn" data-id="${venda.id}" title="Visualizar Venda">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn-icon edit-btn" data-id="${venda.id}" title="Editar Venda">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-icon notes-btn" data-id="${venda.id}" title="Gerenciar Observações" style="color: #6c757d;">
-                                <i class="fas fa-notes-medical"></i>
-                            </button>
-                            <button class="btn-icon delete-btn" data-id="${venda.id}" title="Excluir Venda">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        this.adicionarEventListenersAcoes();
+    if (vendas.length === 0) {
+        container.innerHTML = `
+            <div class="no-data">
+                <i class="fas fa-inbox"></i>
+                <p>Nenhuma venda encontrada</p>
+            </div>
+        `;
+        return;
     }
 
+    container.innerHTML = vendas.map(venda => {
+        const observacaoLocal = this.obterObservacao(venda.id);
+        const temObservacaoLocal = observacaoLocal && observacaoLocal.trim() !== '';
+        const temObservacaoServidor = venda.observacoes && venda.observacoes.trim() !== '';
+        
+        return `
+            <div class="sale-card ${venda.total > 1000 ? 'high-value' : ''} ${temObservacaoLocal ? 'has-local-notes' : ''} ${temObservacaoServidor ? 'has-server-notes' : ''}">
+                <div class="card-header">
+                    <h3>Venda #${venda.id}</h3>
+                    <div class="header-actions">
+                        ${temObservacaoServidor ? `
+                            <span class="notes-indicator server-indicator" title="Observações no servidor">
+                                <i class="fas fa-database"></i>
+                            </span>
+                        ` : ''}
+                        ${temObservacaoLocal ? `
+                            <span class="notes-indicator local-indicator" title="Observações locais">
+                                <i class="fas fa-sticky-note"></i>
+                            </span>
+                        ` : ''}
+                        <span class="status-badge status-${(venda.status || '').toLowerCase()}">
+                            ${this.getStatusText(venda.status)}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-info">
+                        <div class="info-item">
+                            <i class="fas fa-user"></i>
+                            <span class="info-content"><strong>Cliente:</strong> ${venda.cliente?.nome || 'N/A'}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-user-tie"></i>
+                            <span class="info-content"><strong>Vendedor:</strong> ${venda.usuario?.nome || 'N/A'}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-calendar"></i>
+                            <span class="info-content"><strong>Data:</strong> ${venda.data}</span>
+                        </div>
+                    </div>
+                    
+                    ${temObservacaoServidor ? `
+                    <div class="card-notes-preview server-notes">
+                        <strong><i class="fas fa-database"></i> Observação (Servidor):</strong>
+                        <p>${this.escapeHtml(venda.observacoes)}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${temObservacaoLocal ? `
+                    <div class="card-notes-preview local-notes">
+                        <strong><i class="fas fa-sticky-note"></i> Observação (Local):</strong>
+                        <p>${this.escapeHtml(observacaoLocal)}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${venda.itens && venda.itens.length > 0 ? `
+                    <div class="card-products">
+                        <strong>Produtos Vendidos:</strong>
+                        <ul>
+                            ${venda.itens.slice(0, 3).map(item => `
+                                <li>
+                                    <span class="product-name">${item.produto?.nome || 'Produto'}</span>
+                                    <span class="product-details">${item.quantidade || 0}x - R$ ${this.formatarMoeda(item.precoUnit)}</span>
+                                </li>
+                            `).join('')}
+                            ${venda.itens.length > 3 ? `
+                                <li class="more-products">
+                                    <span class="product-name">+${venda.itens.length - 3} produtos</span>
+                                    <span class="product-details">Ver todos</span>
+                                </li>
+                            ` : ''}
+                        </ul>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="card-footer">
+                    <div class="card-total">
+                        Total: <span>R$ ${this.formatarMoeda(venda.total)}</span>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-action btn-view" data-id="${venda.id}" title="Visualizar Venda">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-action btn-edit" data-id="${venda.id}" title="Editar Venda">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action btn-notes" data-id="${venda.id}" title="Gerenciar Observações">
+                            <i class="fas fa-notes-medical"></i>
+                        </button>
+                        <button class="btn-action btn-delete" data-id="${venda.id}" title="Excluir Venda">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    this.adicionarEventListenersAcoes();
+}
     adicionarEventListenersAcoes() {
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -1149,15 +1148,14 @@ class VendasManager {
         dados: {
             data: new Date(data).toISOString(),
             status: status,
-            total: this.converterMoedaParaNumero(total), // ← AQUI MUDEI
+            total: this.converterMoedaParaNumero(total),
             observacoes: observacoes || null,
             cliente: {
                 connect: { id: parseInt(clienteId) }
             }
         }
     };
-
-    }
+} 
 
     async atualizarVenda({ vendaId, dados }) {
         try {

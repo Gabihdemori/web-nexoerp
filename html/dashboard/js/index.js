@@ -31,9 +31,9 @@
     }
  }
        const API_CONFIG = {
-            VENDAS: "http://localhost:3000/api/vendas",
-            PRODUTOS: "http://localhost:3000/api/produtos",
-            CLIENTES: "http://localhost:3000/api/clientes"
+            VENDAS: "https://api-nexoerp.vercel.app/api/vendas",
+            PRODUTOS: "https://api-nexoerp.vercel.app/api/produtos",
+            CLIENTES: "https://api-nexoerp.vercel.app/api/clientes"
         };
 
         // Elementos DOM

@@ -629,3 +629,89 @@
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+/* ESTILOS PARA EXPORTAÇÃO */
+.export-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-lg);
+    z-index: 1000;
+    min-width: 200px;
+    margin-top: 5px;
+}
+
+.export-option {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.export-option:hover {
+    background: var(--gray-100);
+}
+
+[data-theme="dark"] .export-option:hover {
+    background: var(--gray-700);
+}
+
+.export-option:last-child {
+    border-bottom: none;
+}
+
+/* === MODAIS - CORREÇÃO SIMPLES PARA TEMA ESCURO === */
+[data-theme="dark"] .modal-content {
+    background: var(--bg-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-header h3 {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .close-modal {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .close-modal:hover {
+    color: var(--text-primary) !important;
+    background: var(--gray-100) !important;
+}
+
+[data-theme="dark"] .form-group label {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .btn-secondary {
+    background: var(--gray-200) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background: var(--gray-300) !important;
+}
+
+[data-theme="dark"] .detail-item strong,
+[data-theme="dark"] .detail-item span {
+    color: var(--text-primary) !important;
+}

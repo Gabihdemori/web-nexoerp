@@ -39,7 +39,8 @@ const elements = {
     tableView: document.getElementById('tableView'),
     cardsViewContainer: document.getElementById('cardsView'),
     viewButtons: document.querySelectorAll('.view-btn'),
-    addClientBtn: document.getElementById('addClientBtn')
+    addClientBtn: document.getElementById('addClientBtn'),
+    exportBtn: document.getElementById('exportBtn')
 };
 
 // Inicialização
@@ -60,6 +61,54 @@ async function initializeApp() {
 }
 
 function setupEventListeners() {
+
+    console.log('🔧 Configurando event listeners...');
+    
+    console.log('📍 Elementos encontrados:');
+    console.log('- typeFilter:', elements.typeFilter);
+    console.log('- cityFilter:', elements.cityFilter);
+    console.log('- searchFilter:', elements.searchFilter);
+    console.log('- itemsPerPage:', elements.itemsPerPage);
+    console.log('- exportBtn:', elements.exportBtn);
+
+    if (elements.typeFilter) {
+        elements.typeFilter.addEventListener('change', handleFilterChange);
+        console.log('✅ typeFilter event listener adicionado');
+    } else {
+        console.log('❌ typeFilter não encontrado');
+    }
+
+    if (elements.cityFilter) {
+        elements.cityFilter.addEventListener('change', handleFilterChange);
+        console.log('✅ cityFilter event listener adicionado');
+    } else {
+        console.log('❌ cityFilter não encontrado');
+    }
+
+    if (elements.searchFilter) {
+        elements.searchFilter.addEventListener('input', debounce(handleSearch, 300));
+        console.log('✅ searchFilter event listener adicionado');
+    }
+
+    if (elements.itemsPerPage) {
+        elements.itemsPerPage.addEventListener('change', handleItemsPerPageChange);
+        console.log('✅ itemsPerPage event listener adicionado');
+    }
+
+    if (elements.addClientBtn) {
+        elements.addClientBtn.addEventListener('click', function() {
+            window.location.href = 'Nova Tabela/novo_cliente.html';
+        });
+        console.log('✅ addClientBtn event listener adicionado');
+    }
+
+    if (elements.exportBtn) {
+        elements.exportBtn.addEventListener('click', showExportOptions);
+        console.log('✅ exportBtn event listener adicionado');
+    } else {
+        console.log('❌ exportBtn não encontrado');
+    }
+
     if (elements.typeFilter) {
         elements.typeFilter.addEventListener('change', handleFilterChange);
     }
@@ -194,11 +243,11 @@ function populateCityFilter(clientes) {
     const cidades = [...new Set(
         clientes
             .map(cliente => cliente.cidade)
-            .filter(Boolean)
+            .filter(cidade => cidade && cidade.trim() !== '')
             .map(cidade => cidade.trim())
     )].sort();
     
-    elements.cityFilter.innerHTML = '<option value="">Todas</option>' + 
+    elements.cityFilter.innerHTML = '<option value="">Todas as cidades</option>' + 
         cidades.map(cidade => `<option value="${cidade}">${cidade}</option>`).join('');
 }
 
@@ -213,6 +262,10 @@ function handleFilterChange(e) {
     const filterName = e.target.id.replace('Filter', '');
     appState.filters[filterName] = e.target.value;
     appState.currentPage = 1;
+    
+    console.log('🔍 Filtro alterado:', filterName, '=', e.target.value);
+    console.log('📊 Estado atual dos filtros:', appState.filters);
+    
     renderClientes();
 }
 
@@ -232,6 +285,9 @@ function renderClientes() {
     const filteredClientes = filterClientes(appState.clientes);
     const paginatedClientes = paginateClientes(filteredClientes);
     
+    console.log('📈 Clientes filtrados:', filteredClientes.length);
+    console.log('🎯 Filtros ativos:', appState.filters);
+    
     if (appState.currentView === 'table') {
         renderTableView(paginatedClientes, filteredClientes.length);
     } else {
@@ -242,7 +298,13 @@ function renderClientes() {
 }
 
 function filterClientes(clientes) {
-    return clientes.filter(cliente => {
+    console.log('🎯 Aplicando filtros:', {
+        searchTerm: appState.searchTerm,
+        tipo: appState.filters.tipo,
+        cidade: appState.filters.cidade
+    });
+
+    const filtered = clientes.filter(cliente => {
         const searchLower = appState.searchTerm.toLowerCase();
         const matchesSearch = !appState.searchTerm || 
             (cliente.nome && cliente.nome.toLowerCase().includes(searchLower)) ||
@@ -251,16 +313,49 @@ function filterClientes(clientes) {
             (cliente.cpf && cliente.cpf && cliente.cpf.includes(appState.searchTerm)) ||
             (cliente.cnpj && cliente.cnpj && cliente.cnpj.includes(appState.searchTerm));
         
-        const matchesTipo = !appState.filters.tipo || 
-            (appState.filters.tipo === 'PF' && cliente.cpf) ||
-            (appState.filters.tipo === 'PJ' && cliente.cnpj);
+        // CORREÇÃO: Filtro por tipo mais robusto
+        let matchesTipo = true;
+        if (appState.filters.tipo) {
+            if (appState.filters.tipo === 'PF') {
+                matchesTipo = cliente.cpf && !cliente.cnpj;
+            } else if (appState.filters.tipo === 'PJ') {
+                matchesTipo = cliente.cnpj && !cliente.cpf;
+            }
+        }
         
-        const matchesCidade = !appState.filters.cidade || 
-            (cliente.cidade && cliente.cidade.trim().toLowerCase() === appState.filters.cidade.trim().toLowerCase());
+        // CORREÇÃO: Filtro por cidade mais robusto
+        let matchesCidade = true;
+        if (appState.filters.cidade) {
+            if (cliente.cidade) {
+                matchesCidade = cliente.cidade.trim().toLowerCase() === appState.filters.cidade.trim().toLowerCase();
+            } else {
+                matchesCidade = false;
+            }
+        }
         
-        return matchesSearch && matchesTipo && matchesCidade;
+        const matches = matchesSearch && matchesTipo && matchesCidade;
+        
+        // Debug individual para cada cliente
+        if (appState.filters.tipo || appState.filters.cidade) {
+            console.log(`👤 Cliente ${cliente.nome}:`, {
+                nome: cliente.nome,
+                cpf: cliente.cpf,
+                cnpj: cliente.cnpj,
+                cidade: cliente.cidade,
+                matchesSearch,
+                matchesTipo,
+                matchesCidade,
+                matches
+            });
+        }
+        
+        return matches;
     });
+
+    console.log(`📊 Resultado da filtragem: ${filtered.length} de ${clientes.length} clientes`);
+    return filtered;
 }
+
 
 function paginateClientes(clientes) {
     const startIndex = (appState.currentPage - 1) * appState.itemsPerPage;
@@ -1460,145 +1555,221 @@ function updateLastAccess() {
 
 // ========== SISTEMA DE EXPORTAÇÃO PARA CLIENTES ==========
 
+// ========== SISTEMA DE EXPORTAÇÃO ========== 
 function showExportOptions() {
+    // Remove menu existente se houver
+    const existingMenu = document.querySelector('.export-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+        return;
+    }
+
     const exportMenu = document.createElement('div');
     exportMenu.className = 'export-menu';
+    exportMenu.style.cssText = `
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow-lg);
+        z-index: 1000;
+        min-width: 200px;
+        margin-top: 5px;
+    `;
+    
     exportMenu.innerHTML = `
-        <button onclick="exportarClientesParaExcel()" class="export-option">
-            <i class="fas fa-file-excel"></i> Exportar para Excel
+        <button onclick="exportarClientesParaExcel()" class="export-option" style="width: 100%; padding: 12px 16px; border: none; background: none; text-align: left; cursor: pointer; color: var(--text-primary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-file-excel" style="color: #217346;"></i> 
+            Exportar para Excel
         </button>
-        <button onclick="exportarClientesParaPDF()" class="export-option">
-            <i class="fas fa-file-pdf"></i> Exportar para PDF
+        <button onclick="exportarClientesParaPDF()" class="export-option" style="width: 100%; padding: 12px 16px; border: none; background: none; text-align: left; cursor: pointer; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-file-pdf" style="color: #f40f02;"></i>
+            Exportar para PDF
         </button>
     `;
     
-    // Posicionar o menu
-    const rect = elements.exportBtn.getBoundingClientRect();
-    exportMenu.style.position = 'fixed';
-    exportMenu.style.top = `${rect.bottom + 5}px`;
-    exportMenu.style.right = `${window.innerWidth - rect.right}px`;
+    elements.exportBtn.parentNode.style.position = 'relative';
+    elements.exportBtn.parentNode.appendChild(exportMenu);
     
-    document.body.appendChild(exportMenu);
-    
-    // Remover o menu após clicar fora
-    function closeMenu(e) {
-        if (!exportMenu.contains(e.target) && e.target !== elements.exportBtn) {
-            exportMenu.remove();
-            document.removeEventListener('click', closeMenu);
-        }
-    }
-    
-    setTimeout(() => document.addEventListener('click', closeMenu), 100);
+    // Fechar menu ao clicar fora
+    setTimeout(() => {
+        const closeMenu = (e) => {
+            if (!exportMenu.contains(e.target) && e.target !== elements.exportBtn) {
+                exportMenu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        };
+        document.addEventListener('click', closeMenu);
+    }, 100);
 }
 
-// Exportar para Excel
 function exportarClientesParaExcel() {
-    const filteredClientes = filterClientes(appState.clientes);
-    
-    // Criar tabela HTML para exportação
-    let html = `
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome</th>
-                    <th>Email</th>
-                    <th>Telefone</th>
-                    <th>CPF/CNPJ</th>
-                    <th>Tipo</th>
-                    <th>Cidade</th>
-                    <th>Estado</th>
-                    <th>Data Nascimento</th>
-                    <th>Data Cadastro</th>
-                    <th>Total Vendas</th>
-                    <th>Cadastrado Por</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    filteredClientes.forEach(cliente => {
-        // CORREÇÃO: Mostrar o usuário real que cadastrou, não o usuário logado
-        const usuarioCadastro = cliente.usuario ? cliente.usuario.nome : 'Sistema';
-        const totalVendas = cliente.totalVendas || (cliente._count && cliente._count.vendas) || 0;
+    try {
+        const filteredClientes = filterClientes(appState.clientes);
         
-        html += `
-            <tr>
-                <td>${cliente.id}</td>
-                <td>${escapeHtml(cliente.nome || '')}</td>
-                <td>${escapeHtml(cliente.email || '')}</td>
-                <td>${cliente.telefone || ''}</td>
-                <td>${cliente.cpf ? formatarCPF(cliente.cpf) : (cliente.cnpj ? formatarCNPJ(cliente.cnpj) : '')}</td>
-                <td>${cliente.cnpj ? 'PJ' : 'PF'}</td>
-                <td>${escapeHtml(cliente.cidade || '')}</td>
-                <td>${cliente.estado || ''}</td>
-                <td>${cliente.dataNascimento ? formatarDataParaExibicao(cliente.dataNascimento) : ''}</td>
-                <td>${cliente.criadoEm ? formatarDataHora(cliente.criadoEm) : ''}</td>
-                <td>${totalVendas}</td>
-                <td>${usuarioCadastro}</td>
-            </tr>
-        `;
-    });
-    
-    html += `
-            </tbody>
-        </table>
-    `;
-    
-    const nomeArquivo = `clientes_${new Date().toISOString().split('T')[0]}.xls`;
-    
-    // Criar blob e fazer download
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = nomeArquivo;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    showNotification('Exportação para Excel realizada com sucesso!', 'success');
+        if (filteredClientes.length === 0) {
+            showNotification('Nenhum dado para exportar', 'warning');
+            return;
+        }
+        
+        // Criar cabeçalhos
+        const headers = [
+            'ID', 'Nome', 'Email', 'Telefone', 'CPF/CNPJ', 'Tipo', 
+            'Cidade', 'Estado', 'Data Nascimento', 'Data Cadastro', 'Total Vendas'
+        ];
+        
+        // Criar dados
+        const data = filteredClientes.map(cliente => {
+            const tipo = cliente.cnpj ? 'PJ' : 'PF';
+            const documento = cliente.cpf ? formatarCPF(cliente.cpf) : 
+                            cliente.cnpj ? formatarCNPJ(cliente.cnpj) : '';
+            const totalVendas = cliente.totalVendas || 
+                              (cliente._count && cliente._count.vendas) || 
+                              0;
+            
+            return [
+                cliente.id,
+                cliente.nome || '',
+                cliente.email || '',
+                cliente.telefone ? formatarTelefone(cliente.telefone) : '',
+                documento,
+                tipo,
+                cliente.cidade || '',
+                cliente.estado || '',
+                cliente.dataNascimento ? formatarDataParaExibicao(cliente.dataNascimento) : '',
+                cliente.criadoEm ? formatarDataHora(cliente.criadoEm) : '',
+                totalVendas
+            ];
+        });
+        
+        // Criar conteúdo CSV
+        let csvContent = headers.join(';') + '\n';
+        data.forEach(row => {
+            csvContent += row.map(field => `"${field}"`).join(';') + '\n';
+        });
+        
+        // Criar e fazer download do arquivo
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `clientes_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showNotification('Exportação para Excel realizada com sucesso!', 'success');
+        
+    } catch (error) {
+        console.error('Erro na exportação:', error);
+        showNotification('Erro ao exportar dados: ' + error.message, 'error');
+    }
 }
 
-// Exportar para PDF
 function exportarClientesParaPDF() {
-    const filteredClientes = filterClientes(appState.clientes);
-    
-    // Calcular totais
-    const totalClientes = filteredClientes.length;
-    const totalVendas = filteredClientes.reduce((sum, c) => sum + (c.totalVendas || (c._count && c._count.vendas) || 0), 0);
-    const clientesPF = filteredClientes.filter(c => c.cpf).length;
-    const clientesPJ = filteredClientes.filter(c => c.cnpj).length;
+    try {
+        const filteredClientes = filterClientes(appState.clientes);
+        
+        if (filteredClientes.length === 0) {
+            showNotification('Nenhum dado para exportar', 'warning');
+            return;
+        }
+        
+        // Calcular totais
+        const totalClientes = filteredClientes.length;
+        const totalVendas = filteredClientes.reduce((sum, c) => 
+            sum + (c.totalVendas || (c._count && c._count.vendas) || 0), 0);
+        const clientesPF = filteredClientes.filter(c => c.cpf && !c.cnpj).length;
+        const clientesPJ = filteredClientes.filter(c => c.cnpj && !c.cpf).length;
 
-    // Criar conteúdo HTML para o PDF
-    const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Relatório de Clientes</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                h1 { color: #333; text-align: center; margin-bottom: 20px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f5f5f5; font-weight: bold; }
-                .header-info { margin-bottom: 20px; }
-                .summary { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-                .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-                .summary-item { padding: 10px; }
-            </style>
-        </head>
-        <body>
-            <h1>Relatório de Clientes - NexoERP</h1>
-            
-            <div class="header-info">
-                <p><strong>Data de emissão:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+        // Criar conteúdo HTML para o PDF
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Relatório de Clientes - NexoERP</title>
+                <style>
+                    body { 
+                        font-family: 'Segoe UI', Arial, sans-serif; 
+                        margin: 20px; 
+                        color: #333;
+                    }
+                    h1 { 
+                        color: #2c3e50; 
+                        text-align: center; 
+                        margin-bottom: 10px;
+                        border-bottom: 2px solid #3498db;
+                        padding-bottom: 10px;
+                    }
+                    .report-info {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        color: #7f8c8d;
+                    }
+                    .summary-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 15px;
+                        margin: 20px 0;
+                        background: #f8f9fa;
+                        padding: 20px;
+                        border-radius: 8px;
+                        border-left: 4px solid #3498db;
+                    }
+                    .summary-item {
+                        padding: 10px;
+                    }
+                    .summary-item strong {
+                        color: #2c3e50;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                        font-size: 12px;
+                    }
+                    th {
+                        background-color: #34495e;
+                        color: white;
+                        padding: 12px 8px;
+                        text-align: left;
+                        font-weight: 600;
+                    }
+                    td {
+                        padding: 10px 8px;
+                        border-bottom: 1px solid #ddd;
+                    }
+                    tr:nth-child(even) {
+                        background-color: #f8f9fa;
+                    }
+                    .footer {
+                        margin-top: 30px;
+                        text-align: center;
+                        color: #7f8c8d;
+                        font-size: 12px;
+                        border-top: 1px solid #ecf0f1;
+                        padding-top: 15px;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Relatório de Clientes</h1>
+                <div class="report-info">
+                    <strong>Sistema NexoERP</strong> - Emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+                </div>
+                
                 <div class="summary-grid">
                     <div class="summary-item">
-                        <strong>Total de clientes:</strong> ${totalClientes}
+                        <strong>Total de Clientes:</strong> ${totalClientes}
                     </div>
                     <div class="summary-item">
-                        <strong>Total de vendas:</strong> ${totalVendas}
+                        <strong>Total de Vendas:</strong> ${totalVendas}
                     </div>
                     <div class="summary-item">
                         <strong>Pessoa Física:</strong> ${clientesPF}
@@ -1607,66 +1778,77 @@ function exportarClientesParaPDF() {
                         <strong>Pessoa Jurídica:</strong> ${clientesPJ}
                     </div>
                 </div>
-            </div>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Telefone</th>
-                        <th>CPF/CNPJ</th>
-                        <th>Tipo</th>
-                        <th>Cidade</th>
-                        <th>Estado</th>
-                        <th>Data Nasc.</th>
-                        <th>Data Cadastro</th>
-                        <th>Total Vendas</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${filteredClientes.map(cliente => {
-                        const totalVendas = cliente.totalVendas || (cliente._count && cliente._count.vendas) || 0;
-                        return `
-                            <tr>
-                                <td>${cliente.id}</td>
-                                <td>${escapeHtml(cliente.nome || '')}</td>
-                                <td>${escapeHtml(cliente.email || '')}</td>
-                                <td>${cliente.telefone || ''}</td>
-                                <td>${cliente.cpf ? formatarCPF(cliente.cpf) : (cliente.cnpj ? formatarCNPJ(cliente.cnpj) : '')}</td>
-                                <td>${cliente.cnpj ? 'PJ' : 'PF'}</td>
-                                <td>${escapeHtml(cliente.cidade || '')}</td>
-                                <td>${cliente.estado || ''}</td>
-                                <td>${cliente.dataNascimento ? formatarDataParaExibicao(cliente.dataNascimento) : ''}</td>
-                                <td>${cliente.criadoEm ? formatarDataHora(cliente.criadoEm) : ''}</td>
-                                <td>${totalVendas}</td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-            
-            <div style="margin-top: 30px; text-align: center; color: #666;">
-                <p>Relatório gerado automaticamente pelo Sistema NexoERP</p>
-            </div>
-        </body>
-        </html>
-    `;
-    
-    // Abrir em nova janela para impressão/salvar como PDF
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    
-    // Aguardar o carregamento e então imprimir/salvar como PDF
-    printWindow.onload = function() {
-        printWindow.print();
-    };
-    
-    showNotification('PDF gerado com sucesso! Use a opção "Salvar como PDF" na impressora.', 'success');
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Documento</th>
+                            <th>Tipo</th>
+                            <th>Cidade</th>
+                            <th>Estado</th>
+                            <th>Data Nasc.</th>
+                            <th>Cadastro</th>
+                            <th>Vendas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredClientes.map(cliente => {
+                            const tipo = cliente.cnpj ? 'PJ' : 'PF';
+                            const documento = cliente.cpf ? formatarCPF(cliente.cpf) : 
+                                            cliente.cnpj ? formatarCNPJ(cliente.cnpj) : '-';
+                            const totalVendas = cliente.totalVendas || 
+                                              (cliente._count && cliente._count.vendas) || 
+                                              0;
+                            
+                            return `
+                                <tr>
+                                    <td>${cliente.id}</td>
+                                    <td>${escapeHtml(cliente.nome || '-')}</td>
+                                    <td>${escapeHtml(cliente.email || '-')}</td>
+                                    <td>${cliente.telefone ? formatarTelefone(cliente.telefone) : '-'}</td>
+                                    <td>${documento}</td>
+                                    <td>${tipo}</td>
+                                    <td>${escapeHtml(cliente.cidade || '-')}</td>
+                                    <td>${cliente.estado || '-'}</td>
+                                    <td>${cliente.dataNascimento ? formatarDataParaExibicao(cliente.dataNascimento) : '-'}</td>
+                                    <td>${cliente.criadoEm ? new Date(cliente.criadoEm).toLocaleDateString('pt-BR') : '-'}</td>
+                                    <td>${totalVendas}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="footer">
+                    <p>Relatório gerado automaticamente pelo Sistema NexoERP</p>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        // Abrir em nova janela para impressão/salvar como PDF
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        
+        // Aguardar o carregamento e então imprimir
+        printWindow.onload = function() {
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        };
+        
+        showNotification('PDF gerado com sucesso! Use a opção "Salvar como PDF" na impressora.', 'success');
+        
+    } catch (error) {
+        console.error('Erro na geração do PDF:', error);
+        showNotification('Erro ao gerar PDF: ' + error.message, 'error');
+    }
 }
-
 // ========== FUNÇÕES GLOBAIS ==========
 function changePage(page) {
     appState.currentPage = page;

@@ -165,3 +165,147 @@
     background: var(--info);
     color: white;
 }
+
+/* ESTILOS PARA OS MODAIS - APENAS CORES COM VARIÁVEIS CSS */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-content {
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.modal-header h3 {
+    color: var(--text-primary) !important;
+}
+
+/* FORMULÁRIOS */
+.form-group label {
+    color: var(--text-primary) !important;
+    font-weight: bold !important;
+}
+
+.form-group input,
+.form-group select {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary) !important;
+    outline: none !important;
+}
+
+/* BOTÕES */
+.btn-primary {
+    background: var(--primary) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark) !important;
+}
+
+.btn-secondary {
+    background: var(--gray-200) !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+}
+
+.btn-secondary:hover {
+    background: var(--gray-300) !important;
+}
+
+[data-theme="dark"] .btn-secondary {
+    background: var(--gray-700) !important;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background: var(--gray-600) !important;
+}
+
+.btn-danger {
+    background: var(--error) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn-danger:hover {
+    background: #dc2626 !important;
+}
+
+/* MENSAGENS */
+#errorMsg {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: var(--error) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+
+#successMsg {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: var(--success) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+
+/* DETALHES DO USUÁRIO */
+.user-details-content {
+    color: var(--text-primary) !important;
+}
+
+.detail-item strong {
+    color: var(--text-primary) !important;
+}
+
+.detail-item span {
+    color: var(--text-secondary) !important;
+}
+
+/* TEXTOS PEQUENOS */
+small {
+    color: var(--text-secondary) !important;
+}
+
+/* TOGGLE PASSWORD */
+.toggle-password {
+    background: none !important;
+    border: none !important;
+    color: var(--text-secondary) !important;
+}
+
+.toggle-password:hover {
+    color: var(--text-primary) !important;
+    background: var(--gray-100) !important;
+}
+
+[data-theme="dark"] .toggle-password:hover {
+    background: var(--gray-700) !important;
+}
+
+/* CORREÇÃO ESPECÍFICA PARA O BOTÃO CANCELAR E X */
+.close-modal {
+    color: var(--text-secondary) !important;
+    background: none !important;
+    border: none !important;
+    font-size: 1.5rem !important;
+    cursor: pointer !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+}
+
+.close-modal:hover {
+    color: var(--text-primary) !important;
+    background: var(--gray-100) !important;
+}
+
+[data-theme="dark"] .close-modal:hover {
+    background: var(--gray-700) !important;
+}

@@ -19,14 +19,96 @@ const appState = {
 let elements = {};
 
 // Funções de formatação de valores
+// FUNÇÃO CORRIGIDA PARA FORMATAR VALORES
 function formatarValor(valor) {
-    if (valor === null || valor === undefined || isNaN(valor)) {
+    // 1. Primeiro, converter para número
+    let numero;
+    
+    if (valor === null || valor === undefined) {
         return 'R$ 0,00';
     }
     
-    // Formatar com 2 casas decimais e vírgula como separador decimal
-    return 'R$ ' + valor.toFixed(2).replace('.', ',');
+    if (typeof valor === 'string') {
+        // Remover tudo que não for número, ponto ou vírgula
+        const valorLimpo = valor
+            .replace(/[^\d.,-]/g, '') // Remove tudo exceto números, pontos, vírgulas e hífen
+            .replace(/\./g, '') // Remove pontos de milhar
+            .replace(',', '.') // Converte vírgula decimal para ponto
+            .trim();
+        
+        numero = parseFloat(valorLimpo);
+    } else {
+        numero = parseFloat(valor);
+    }
+    
+    // 2. Verificar se é um número válido
+    if (isNaN(numero)) {
+        return 'R$ 0,00';
+    }
+    
+    // 3. Arredondar para 2 casas decimais
+    numero = Math.round((numero + Number.EPSILON) * 100) / 100;
+    
+    // 4. Formatar no padrão brasileiro
+    const partes = numero.toFixed(2).split('.');
+    const inteiro = partes[0];
+    const decimal = partes[1] || '00';
+    
+    // Adicionar separador de milhar
+    const inteiroComSeparador = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    
+    return `R$ ${inteiroComSeparador},${decimal}`;
 }
+
+// VERSÃO ALTERNATIVA MAIS SIMPLES (recomendada)
+function formatarValorSimples(valor) {
+    if (valor === null || valor === undefined || valor === '') {
+        return 'R$ 0,00';
+    }
+    
+    // Converter para número
+    const numero = typeof valor === 'string' 
+        ? parseFloat(valor.replace(/[^\d.,-]/g, '').replace(',', '.')) 
+        : parseFloat(valor);
+    
+    // Verificar se é válido
+    if (isNaN(numero)) {
+        return 'R$ 0,00';
+    }
+    
+    // Usar Intl.NumberFormat que é mais confiável
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(numero);
+}
+
+// FUNÇÃO PARA TESTAR (adicione esta para debug)
+function testarFormatacao() {
+    const testes = [
+        1234.56,
+        1000,
+        0,
+        0.5,
+        999.99,
+        "1234.56",
+        "1.234,56",
+        "R$ 1.234,56",
+        "abc",
+        null,
+        undefined
+    ];
+    
+    console.log('=== TESTE DE FORMATAÇÃO ===');
+    testes.forEach(valor => {
+        console.log(`${valor} => ${formatarValorSimples(valor)}`);
+    });
+}
+
+// Chamar a função de teste
+// testarFormatacao();
 
 function formatarNumero(numero) {
     if (numero === null || numero === undefined || isNaN(numero)) {

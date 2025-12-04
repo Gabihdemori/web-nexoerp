@@ -1,404 +1,491 @@
+/* === ESTOQUE: MÉTRICAS (MANTIDO IGUAL) === */
 .metrics-section {
-  margin-bottom: 30px;
+    margin-bottom: 30px;
 }
 
 .metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
 }
 
 .metric-card {
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-lg);
-  padding: 24px;
-  box-shadow: var(--box-shadow);
-  transition: var(--transition);
-  animation: slideIn 0.5s ease;
-  position: relative;
-  border-left: 4px solid var(--primary);
-  display: flex;
-  align-items: center;
-  gap: 16px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-lg);
+    padding: 24px;
+    box-shadow: var(--box-shadow);
+    transition: var(--transition);
+    animation: slideIn 0.5s ease;
+    position: relative;
+    border-left: 4px solid var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 16px;
 }
 
 .metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--box-shadow-lg);
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-lg);
 }
 
-/* Bordas laterais */
 .metric-card:nth-child(1) { border-left-color: var(--primary); }
 .metric-card:nth-child(2) { border-left-color: var(--success); }
 .metric-card:nth-child(3) { border-left-color: var(--info); }
 .metric-card:nth-child(4) { border-left-color: var(--warning); }
 
-/* Ícones */
 .metric-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  color: #fff;
-  flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: white;
+    flex-shrink: 0;
 }
 
 .metric-card:nth-child(1) .metric-icon {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
 }
 .metric-card:nth-child(2) .metric-icon {
-  background: linear-gradient(135deg, var(--success), #34d399);
+    background: linear-gradient(135deg, var(--success), #34d399);
 }
 .metric-card:nth-child(3) .metric-icon {
-  background: linear-gradient(135deg, var(--info), #06b6d4);
+    background: linear-gradient(135deg, var(--info), #06b6d4);
 }
 .metric-card:nth-child(4) .metric-icon {
-  background: linear-gradient(135deg, var(--warning), #f59e0b);
+    background: linear-gradient(135deg, var(--warning), #f59e0b);
+}
+
+.metric-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .metric-info h3 {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .metric-value {
-  font-size: 2.1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
-  line-height: 1;
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1;
+    font-feature-settings: "tnum";
 }
 
 .metric-trend {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    margin-top: 4px;
 }
 
 .metric-trend.positive { color: var(--success); }
 .metric-trend.negative { color: var(--error); }
 
+.metric-trend i {
+    font-size: 0.7rem;
+}
+
 .metric-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: var(--primary);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--primary);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
-  .metrics-grid { grid-template-columns: 1fr; }
-  .metric-card { padding: 20px; gap: 12px; }
-  .metric-icon { width: 50px; height: 50px; font-size: 1.4rem; }
-  .metric-value { font-size: 1.8rem; }
-}
-@media (min-width: 769px) and (max-width: 1024px) {
-  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (min-width: 1025px) {
-  .metrics-grid { grid-template-columns: repeat(4, 1fr); }
+/* === ESTOQUE: TABELA === */
+.table-container {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
 }
 
-/* Animações */
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-.metric-card:nth-child(1) { animation-delay: 0.1s; }
-.metric-card:nth-child(2) { animation-delay: 0.2s; }
-.metric-card:nth-child(3) { animation-delay: 0.3s; }
-.metric-card:nth-child(4) { animation-delay: 0.4s; }
 
+.data-table thead {
+    background: var(--gray-50);
+    border-bottom: 2px solid var(--border-color);
+}
 
+.data-table th {
+    padding: 16px 20px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
 
+.data-table tbody tr {
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
 
+.data-table tbody tr:last-child {
+    border-bottom: none;
+}
 
+.data-table tbody tr:hover {
+    background: var(--gray-50);
+}
 
+.data-table td {
+    padding: 16px 20px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
 
+/* Badges para estoque */
+.stock-badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 50px;
+    text-align: center;
+}
 
+.out-of-stock {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
 
+.critical-stock {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
 
+.low-stock {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
 
+.medium-stock {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--info);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
 
+.good-stock {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
 
+/* Status badges (EXATAMENTE IGUAL) */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid;
+}
 
+.status-active {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border-color: rgba(16, 185, 129, 0.2);
+}
 
+.status-inactive {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+    border-color: rgba(239, 68, 68, 0.2);
+}
 
+/* Product info (EXATAMENTE IGUAL) */
+.product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
 
+.product-info strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
 
+.product-info small {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
 
+/* Preço (EXATAMENTE IGUAL) */
+.price-cell {
+    font-weight: 600;
+    color: var(--text-primary);
+}
 
+/* Ações na tabela (EXATAMENTE IGUAL) */
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+}
 
+.btn-action {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    background: var(--gray-100);
+    color: var(--text-secondary);
+}
 
+.btn-action:hover {
+    background: var(--gray-200);
+    transform: translateY(-1px);
+}
 
+.btn-action.btn-edit:hover {
+    background: var(--primary);
+    color: white;
+}
 
+.btn-action.btn-delete:hover {
+    background: var(--error);
+    color: white;
+}
 
+.btn-action[data-tooltip] {
+    position: relative;
+}
 
-/* Visualização em cards */
+.btn-action[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-primary);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+/* === CARDS VIEW (EXATAMENTE IGUAL) === */
 .cards-view {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
     padding: 20px 0;
 }
 
 .product-card {
-    background: var(--card-bg);
-    border-radius: 12px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-lg);
     padding: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
     border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .product-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--box-shadow-lg);
 }
 
 .card-header {
     display: flex;
     align-items: flex-start;
-    gap: 15px;
-    margin-bottom: 15px;
-    position: relative;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .product-avatar {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--gray-100);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1.2rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
     flex-shrink: 0;
 }
 
 .product-info {
     flex: 1;
+    min-width: 0;
 }
 
 .product-info h3 {
-    margin: 0 0 5px 0;
+    margin: 0 0 4px 0;
     color: var(--text-primary);
-    font-size: 1.1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.2;
 }
 
-.product-id {
+.product-type {
     margin: 0;
     color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.card-header .status-badge {
-    position: absolute;
-    top: 0;
-    right: 0;
+    font-size: 0.8rem;
 }
 
 .card-body {
-    margin-bottom: 15px;
+    margin-bottom: 16px;
 }
 
-.product-description {
+.description-info,
+.price-info {
+    margin-bottom: 12px;
+}
+
+.description-info p,
+.price-info p {
+    margin: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--text-primary);
-    margin-bottom: 15px;
-    font-size: 0.95rem;
-    line-height: 1.4;
+    font-size: 0.8rem;
+}
+
+.description-info i,
+.price-info i {
+    width: 14px;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
 }
 
 .product-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
 }
 
 .meta-item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .meta-label {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .meta-value {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--text-primary);
     font-weight: 600;
-}
-
-.stock-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background: var(--bg-secondary);
-    border-radius: 8px;
-}
-
-.stock-level {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-}
-
-.stock-level.out-of-stock {
-    color: var(--error-color);
-}
-
-.stock-level.critical-stock {
-    color: var(--warning-color);
-}
-
-.stock-level.low-stock {
-    color: var(--warning-color);
-}
-
-.stock-level.medium-stock {
-    color: var(--info-color);
-}
-
-.stock-level.good-stock {
-    color: var(--success-color);
-}
-
-.total-value {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
 }
 
 .card-actions {
     display: flex;
-    gap: 10px;
-}
-
-.card-actions .btn {
-    flex: 1;
-    padding: 8px 12px;
-    font-size: 0.85rem;
-}
-
-/* Estilos para a tabela */
-.stock-info {
-    display: flex;
-    align-items: center;
     gap: 8px;
+    justify-content: flex-start;
 }
 
-.stock-quantity {
-    font-weight: 600;
+.card-actions .btn-action {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
 }
 
-.stock-quantity.out-of-stock {
-    color: var(--error-color);
+.card-actions .btn-action.btn-edit:hover {
+    background: var(--primary);
+    color: white;
 }
 
-.stock-quantity.critical-stock {
-    color: var(--warning-color);
+.card-actions .btn-action.btn-delete:hover {
+    background: var(--error);
+    color: white;
 }
 
-.stock-quantity.low-stock {
-    color: var(--warning-color);
+/* === ANIMAÇÕES (EXATAMENTE IGUAL) === */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.stock-quantity.medium-stock {
-    color: var(--info-color);
-}
+.metric-card:nth-child(1) { animation-delay: 0.1s; }
+.metric-card:nth-child(2) { animation-delay: 0.2s; }
+.metric-card:nth-child(3) { animation-delay: 0.3s; }
+.metric-card:nth-child(4) { animation-delay: 0.4s; }
 
-.stock-quantity.good-stock {
-    color: var(--success-color);
-}
-
-.low-stock-warning {
-    color: var(--warning-color);
-}
-
-/* Menu de exportação */
-.export-menu {
-    background-color: #fff;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    padding: 10px;
-    z-index: 1000;
-    min-width: 200px;
-}
-
-.export-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 10px;
-    background: none;
-    border: none;
-    text-align: left;
-    cursor: pointer;
-    border-radius: 6px;
-    color: var(--text-primary);
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
-}
-
-.export-option:hover {
-    background: var(--bg-secondary);
-}
-
-.export-option i {
-    width: 16px;
-    color: var(--primary-color);
-}
-
-/* Status badges */
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.status-active {
-    background: var(--success-light);
-    color: var(--success-color);
-}
-
-.status-inactive {
-    background: var(--error-light);
-    color: var(--error-color);
-}
-
-/* Responsividade */
+/* === RESPONSIVIDADE (EXATAMENTE IGUAL) === */
 @media (max-width: 768px) {
     .metrics-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .metric-card {
+        padding: 20px;
+        gap: 12px;
+    }
+    
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.4rem;
+    }
+    
+    .metric-value {
+        font-size: 1.8rem;
     }
     
     .cards-view {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 16px;
     }
     
     .product-meta {
@@ -406,21 +493,98 @@
     }
     
     .card-actions {
-        flex-direction: column;
+        gap: 6px;
     }
     
-    .stock-section {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
+    .card-actions .btn-action {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
     
-    .view-controls {
-        flex-direction: column;
-        gap: 15px;
+    .cards-view {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1025px) {
+    .metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
     }
     
-    .filter-group {
-        width: 100%;
+    .cards-view {
+        grid-template-columns: repeat(3, 1fr);
     }
+}
+
+/* === ADICIONAIS ESPECÍFICOS PARA ESTOQUE === */
+/* Estilos para o indicador de estoque baixo */
+.low-stock-warning {
+    color: var(--warning);
+    margin-left: 5px;
+}
+
+/* Ajuste para os botões de edição/exclusão maiores */
+.btn-edit, .btn-delete {
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-edit {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-edit:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    background: var(--error);
+    color: white;
+}
+
+.btn-delete:hover {
+    background: var(--error-dark);
+    transform: translateY(-1px);
+}
+
+/* Para o ícone de exibição em tabela */
+.stock-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Estado vazio */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: var(--gray-300);
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
 }

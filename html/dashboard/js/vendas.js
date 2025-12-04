@@ -1,9 +1,10 @@
-// vendas.js - VERSÃO ATUALIZADA PARA BACKEND COM OBSERVAÇÕES
+// vendas.js - VERSÃO CORRIGIDA COM PAGINAÇÃO E FILTROS FUNCIONAIS
 class VendasManager {
     constructor() {
         this.token = localStorage.getItem('token');
         this.userData = JSON.parse(localStorage.getItem('user') || 'null');
-        this.vendas = [];
+        this.todasVendas = []; // Todas as vendas carregadas da API
+        this.vendas = []; // Vendas atuais (mantém compatibilidade)
         this.clientes = [];
         this.vendedores = [];
         this.observacoesVendas = this.carregarObservacoes();
@@ -12,7 +13,7 @@ class VendasManager {
             status: '',
             cliente: '',
             vendedor: '',
-            periodo: 'month',
+            periodo: 'all',
             page: 1,
             limit: 10
         };
@@ -29,7 +30,6 @@ class VendasManager {
     init() {
         this.carregarDadosIniciais();
         this.configurarEventListeners();
-        this.atualizarMetricas();
     }
 
     async carregarDadosIniciais() {
@@ -43,16 +43,28 @@ class VendasManager {
     async carregarVendas() {
         try {
             const response = await this.fetchAuth('https://api-nexoerp.vercel.app/api/vendas');
-            console.log('Resposta da API de vendas:', response);
+            console.log('Total de vendas carregadas da API:', response.vendas?.length || 0);
             
-            this.vendas = response.vendas || [];
-            this.vendasFiltradas = [...this.vendas];
-            this.renderizarVendas();
+            this.todasVendas = response.vendas || [];
+            this.vendas = this.todasVendas; // Mantém compatibilidade
+            
+            console.log('Total de vendas armazenadas:', this.todasVendas.length);
+            
+            // Atualizar métricas com todas as vendas
             this.atualizarMetricas();
+            
+            // Aplicar filtros iniciais
+            this.aplicarFiltrosReiniciar();
+            
         } catch (error) {
             console.error('Erro ao carregar vendas:', error);
-            this.mostrarNotificacao('Erro ao carregar vendas', 'error');
+            this.mostrarNotificacao('Erro ao carregar vendas: ' + error.message, 'error');
         }
+    }
+
+    aplicarFiltrosReiniciar() {
+        this.filtros.page = 1; // Volta para página 1
+        this.aplicarFiltros();
     }
 
     async carregarClientes() {
@@ -74,30 +86,42 @@ class VendasManager {
             console.error('Erro ao carregar vendedores:', error);
         }
     }
-    formatarMoeda(valor) {
-    if (valor === null || valor === undefined) return '0,00';
-    
-    const numero = parseFloat(valor);
-    if (isNaN(numero)) return '0,00';
-    
-    return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(numero);
-}
 
+    formatarMoeda(valor) {
+        if (valor === null || valor === undefined) return '0,00';
+        
+        const numero = parseFloat(valor);
+        if (isNaN(numero)) return '0,00';
+        
+        return new Intl.NumberFormat('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(numero);
+    }
 
     converterMoedaParaNumero(valorString) {
-    if (!valorString) return 0;
-    m();
-
-    valorLimpo = valorLimpo.replace(/\./g, '');
-  
-    valorLimpo = valorLimpo.replace(',', '.');
-    
-    const valorNumerico = parseFloat(valorLimpo);
-    return isNaN(valorNumerico) ? 0 : valorNumerico;
-}
+        console.log('Convertendo moeda:', valorString);
+        
+        if (!valorString) return 0;
+        
+        // Converte para string e remove espaços
+        let valorLimpo = valorString.toString().trim();
+        
+        // Remove "R$" se existir
+        valorLimpo = valorLimpo.replace('R$', '').trim();
+        
+        // Remove todos os pontos (separadores de milhar)
+        valorLimpo = valorLimpo.replace(/\./g, '');
+        
+        // Substitui vírgula por ponto para parseFloat funcionar
+        valorLimpo = valorLimpo.replace(',', '.');
+        
+        const valorNumerico = parseFloat(valorLimpo);
+        const resultado = isNaN(valorNumerico) ? 0 : valorNumerico;
+        
+        console.log('Resultado da conversão:', resultado);
+        return resultado;
+    }
 
     // ========== SISTEMA DE OBSERVAÇÕES NO LOCALSTORAGE ==========
     carregarObservacoes() {
@@ -234,10 +258,15 @@ class VendasManager {
         const itemsPerPage = document.getElementById('itemsPerPage');
 
         if (searchFilter) {
+            // Usar debounce para melhor performance
+            let timeout;
             searchFilter.addEventListener('input', (e) => {
-                this.filtros.search = e.target.value;
-                this.filtros.page = 1;
-                this.aplicarFiltros();
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    this.filtros.search = e.target.value;
+                    this.filtros.page = 1;
+                    this.aplicarFiltros();
+                }, 300);
             });
         }
 
@@ -296,96 +325,187 @@ class VendasManager {
         }
     }
 
-    aplicarFiltros() {
-        let vendasFiltradas = [...this.vendas];
+    // Método auxiliar para calcular períodos de data
+    // No método calcularPeriodo(), adicione:
+calcularPeriodo(periodo) {
+    const now = new Date();
+    console.log('Data atual:', now.toISOString(), 'Mês atual:', now.getMonth() + 1, 'Ano atual:', now.getFullYear());
+    
+    let dataInicio, dataFim;
+    
+    switch (periodo) {
+        case 'today':
+            dataInicio = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            dataFim = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            break;
+            
+        case 'month':
+            dataInicio = new Date(now.getFullYear(), now.getMonth(), 1);
+            dataFim = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            dataFim.setHours(23, 59, 59, 999);
+            console.log('Período do mês:', dataInicio.toISOString(), 'a', dataFim.toISOString());
+            break;
+            
+        // ... outros casos
+    }
+    
+    return { dataInicio, dataFim };
+}
 
+    aplicarFiltros() {
+        console.log('Aplicando filtros:', this.filtros);
+        
+        // Começar com todas as vendas
+        let vendasFiltradas = [...this.todasVendas];
+        
+        console.log('Vendas antes dos filtros:', vendasFiltradas.length);
+
+        // 1. Filtro de busca geral
         if (this.filtros.search) {
             const searchTerm = this.filtros.search.toLowerCase();
-            vendasFiltradas = vendasFiltradas.filter(venda => 
-                venda.id.toString().includes(searchTerm) ||
-                (venda.cliente?.nome && venda.cliente.nome.toLowerCase().includes(searchTerm)) ||
-                (venda.usuario?.nome && venda.usuario.nome.toLowerCase().includes(searchTerm)) ||
-                (venda.observacoes && venda.observacoes.toLowerCase().includes(searchTerm)) ||
-                (venda.itens && venda.itens.some(item => 
-                    item.produto?.nome && item.produto.nome.toLowerCase().includes(searchTerm)
-                ))
-            );
+            vendasFiltradas = vendasFiltradas.filter(venda => {
+                // Verificar ID
+                if (venda.id.toString().includes(searchTerm)) return true;
+                
+                // Verificar nome do cliente
+                if (venda.cliente?.nome && venda.cliente.nome.toLowerCase().includes(searchTerm)) return true;
+                
+                // Verificar nome do vendedor
+                if (venda.usuario?.nome && venda.usuario.nome.toLowerCase().includes(searchTerm)) return true;
+                
+                // Verificar observações do servidor
+                if (venda.observacoes && venda.observacoes.toLowerCase().includes(searchTerm)) return true;
+                
+                // Verificar observações locais
+                const observacaoLocal = this.obterObservacao(venda.id);
+                if (observacaoLocal && observacaoLocal.toLowerCase().includes(searchTerm)) return true;
+                
+                // Verificar itens
+                if (venda.itens && Array.isArray(venda.itens)) {
+                    const itemEncontrado = venda.itens.some(item => 
+                        item.produto?.nome && item.produto.nome.toLowerCase().includes(searchTerm)
+                    );
+                    if (itemEncontrado) return true;
+                }
+                
+                return false;
+            });
+            console.log('Após filtro de busca:', vendasFiltradas.length);
         }
 
+        // 2. Filtro por status
         if (this.filtros.status) {
             vendasFiltradas = vendasFiltradas.filter(venda => venda.status === this.filtros.status);
+            console.log('Após filtro de status:', vendasFiltradas.length);
         }
 
+        // 3. Filtro por cliente
         if (this.filtros.cliente) {
             vendasFiltradas = vendasFiltradas.filter(venda => 
                 venda.clienteId == this.filtros.cliente || venda.cliente?.id == this.filtros.cliente
             );
+            console.log('Após filtro de cliente:', vendasFiltradas.length);
         }
 
+        // 4. Filtro por vendedor
         if (this.filtros.vendedor) {
             vendasFiltradas = vendasFiltradas.filter(venda => 
                 venda.usuarioId == this.filtros.vendedor || venda.usuario?.id == this.filtros.vendedor
             );
+            console.log('Após filtro de vendedor:', vendasFiltradas.length);
         }
 
+        // 5. Filtro por período
         if (this.filtros.periodo && this.filtros.periodo !== 'all') {
-            const now = new Date();
-            let startDate, endDate;
-
-            switch (this.filtros.periodo) {
-                case 'today':
-                    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-                    break;
-                case 'week':
-                    const dayOfWeek = now.getDay();
-                    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-                    startDate = new Date(now.getFullYear(), now.getMonth(), diff);
-                    endDate = new Date(now.getFullYear(), now.getMonth(), diff + 7);
-                    break;
-                case 'month':
-                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                    break;
-                case 'quarter':
-                    const quarter = Math.floor(now.getMonth() / 3);
-                    startDate = new Date(now.getFullYear(), quarter * 3, 1);
-                    endDate = new Date(now.getFullYear(), (quarter + 1) * 3, 0);
-                    break;
-                case 'year':
-                    startDate = new Date(now.getFullYear(), 0, 1);
-                    endDate = new Date(now.getFullYear(), 11, 31);
-                    break;
-                default:
-                    startDate = null;
-                    endDate = null;
-            }
-
-            if (startDate && endDate) {
+            const { dataInicio, dataFim } = this.calcularPeriodo(this.filtros.periodo);
+            
+            if (dataInicio && dataFim) {
                 vendasFiltradas = vendasFiltradas.filter(venda => {
                     const dataVenda = this.parseDate(venda.data);
-                    return dataVenda >= startDate && dataVenda <= endDate;
+                    if (!dataVenda) return false;
+                    
+                    // Verificar se a data está dentro do período
+                    return dataVenda >= dataInicio && dataVenda <= dataFim;
                 });
+                console.log('Após filtro de período:', vendasFiltradas.length);
             }
         }
 
+        // Ordenar por data (mais recente primeiro)
+        vendasFiltradas.sort((a, b) => {
+            const dataA = this.parseDate(a.data);
+            const dataB = this.parseDate(b.data);
+            
+            if (!dataA || !dataB) return 0;
+            
+            return dataB.getTime() - dataA.getTime();
+        });
+
+        // Salvar vendas filtradas
         this.vendasFiltradas = vendasFiltradas;
+        console.log('Total de vendas após filtros:', this.vendasFiltradas.length);
+
+        // Renderizar a página atual
         this.renderizarVendas();
         this.atualizarMetricas();
     }
 
     parseDate(dateString) {
-        if (!dateString) return null;
-        
-        const match = dateString.match(/(\d{2})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})/);
-        if (match) {
-            const [, day, month, year, hours, minutes] = match;
-            const fullYear = 2000 + parseInt(year);
-            return new Date(fullYear, parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
-        }
-        
-        return new Date(dateString);
+    if (!dateString || dateString === '') {
+        console.warn('Data string vazia ou nula:', dateString);
+        return null;
     }
+    
+    console.log('Parsing date (BR):', dateString);
+    
+    // Tenta primeiro como formato brasileiro: DD/MM/YYYY HH:MM
+    const formatoBrasileiroComHora = /^(\d{1,2})\/(\d{1,2})\/(\d{4}) (\d{1,2}):(\d{1,2})$/;
+    const matchBRComHora = dateString.match(formatoBrasileiroComHora);
+    if (matchBRComHora) {
+        const [, day, month, year, hour, minute] = matchBRComHora;
+        console.log(`Parseado como BR: dia=${day}, mês=${month}, ano=${year}, hora=${hour}, min=${minute}`);
+        return new Date(year, month - 1, day, hour, minute);
+    }
+    
+    // Tenta formato brasileiro sem hora: DD/MM/YYYY
+    const formatoBrasileiroSemHora = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    const matchBRSemHora = dateString.match(formatoBrasileiroSemHora);
+    if (matchBRSemHora) {
+        const [, day, month, year] = matchBRSemHora;
+        console.log(`Parseado como BR: dia=${day}, mês=${month}, ano=${year}`);
+        return new Date(year, month - 1, day);
+    }
+    
+    // Tenta formato brasileiro com ano de 2 dígitos: DD/MM/YY HH:MM
+    const formatoBRAnoCurtoComHora = /^(\d{1,2})\/(\d{1,2})\/(\d{2}) (\d{1,2}):(\d{1,2})$/;
+    const matchBRAnoCurtoComHora = dateString.match(formatoBRAnoCurtoComHora);
+    if (matchBRAnoCurtoComHora) {
+        const [, day, month, year, hour, minute] = matchBRAnoCurtoComHora;
+        const fullYear = 2000 + parseInt(year);
+        console.log(`Parseado como BR (ano curto): dia=${day}, mês=${month}, ano=${fullYear}, hora=${hour}, min=${minute}`);
+        return new Date(fullYear, month - 1, day, hour, minute);
+    }
+    
+    // Tenta formato brasileiro com ano de 2 dígitos sem hora: DD/MM/YY
+    const formatoBRAnoCurtoSemHora = /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/;
+    const matchBRAnoCurtoSemHora = dateString.match(formatoBRAnoCurtoSemHora);
+    if (matchBRAnoCurtoSemHora) {
+        const [, day, month, year] = matchBRAnoCurtoSemHora;
+        const fullYear = 2000 + parseInt(year);
+        console.log(`Parseado como BR (ano curto): dia=${day}, mês=${month}, ano=${fullYear}`);
+        return new Date(fullYear, month - 1, day);
+    }
+    
+    // Se não for formato brasileiro, tenta como ISO
+    let date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+        console.log('Parseado como ISO:', date);
+        return date;
+    }
+    
+    console.error('Não foi possível parsear a data:', dateString);
+    return null;
+}
 
     alternarVisualizacao(view) {
         this.currentView = view;
@@ -419,6 +539,8 @@ class VendasManager {
         const endIndex = startIndex + this.filtros.limit;
         const vendasPaginadas = this.vendasFiltradas.slice(startIndex, endIndex);
 
+        console.log(`Renderizando página ${this.filtros.page} (${startIndex}-${endIndex}) de ${this.vendasFiltradas.length} vendas`);
+
         if (this.currentView === 'table') {
             this.renderizarTabela(vendasPaginadas);
         } else {
@@ -438,6 +560,7 @@ class VendasManager {
                     <td colspan="9" class="no-data">
                         <i class="fas fa-inbox"></i>
                         <p>Nenhuma venda encontrada</p>
+                        ${this.vendasFiltradas.length > 0 ? '<small>Tente ajustar os filtros</small>' : ''}
                     </td>
                 </tr>
             `;
@@ -445,6 +568,8 @@ class VendasManager {
         }
 
         tbody.innerHTML = vendas.map(venda => {
+            console.log('Renderizando venda ID:', venda.id);
+            
             const observacaoLocal = this.obterObservacao(venda.id);
             const temObservacaoLocal = observacaoLocal && observacaoLocal.trim() !== '';
             const temObservacaoServidor = venda.observacoes && venda.observacoes.trim() !== '';
@@ -456,7 +581,6 @@ class VendasManager {
                     <td>${venda.cliente?.nome || 'N/A'}</td>
                     <td>${venda.usuario?.nome || 'N/A'}</td>
                     <td>R$ ${this.formatarMoeda(venda.total)}</td>
-
                     <td>
                         <span class="status-badge status-${(venda.status || '').toLowerCase()}">
                             ${this.getStatusText(venda.status)}
@@ -498,123 +622,133 @@ class VendasManager {
     }
 
     renderizarCards(vendas) {
-    const container = document.getElementById('cardsView');
-    if (!container) return;
+        const container = document.getElementById('cardsView');
+        if (!container) return;
 
-    if (vendas.length === 0) {
-        container.innerHTML = `
-            <div class="no-data">
-                <i class="fas fa-inbox"></i>
-                <p>Nenhuma venda encontrada</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = vendas.map(venda => {
-        const observacaoLocal = this.obterObservacao(venda.id);
-        const temObservacaoLocal = observacaoLocal && observacaoLocal.trim() !== '';
-        const temObservacaoServidor = venda.observacoes && venda.observacoes.trim() !== '';
-        
-        return `
-            <div class="sale-card ${venda.total > 1000 ? 'high-value' : ''} ${temObservacaoLocal ? 'has-local-notes' : ''} ${temObservacaoServidor ? 'has-server-notes' : ''}">
-                <div class="card-header">
-                    <h3>Venda #${venda.id}</h3>
-                    <div class="header-actions">
-                        ${temObservacaoServidor ? `
-                            <span class="notes-indicator server-indicator" title="Observações no servidor">
-                                <i class="fas fa-database"></i>
-                            </span>
-                        ` : ''}
-                        ${temObservacaoLocal ? `
-                            <span class="notes-indicator local-indicator" title="Observações locais">
-                                <i class="fas fa-sticky-note"></i>
-                            </span>
-                        ` : ''}
-                        <span class="status-badge status-${(venda.status || '').toLowerCase()}">
-                            ${this.getStatusText(venda.status)}
-                        </span>
-                    </div>
+        if (vendas.length === 0) {
+            container.innerHTML = `
+                <div class="no-data">
+                    <i class="fas fa-inbox"></i>
+                    <p>Nenhuma venda encontrada</p>
+                    ${this.vendasFiltradas.length > 0 ? '<small>Tente ajustar os filtros</small>' : ''}
                 </div>
-                <div class="card-body">
-                    <div class="card-info">
-                        <div class="info-item">
-                            <i class="fas fa-user"></i>
-                            <span class="info-content"><strong>Cliente:</strong> ${venda.cliente?.nome || 'N/A'}</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-user-tie"></i>
-                            <span class="info-content"><strong>Vendedor:</strong> ${venda.usuario?.nome || 'N/A'}</span>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-calendar"></i>
-                            <span class="info-content"><strong>Data:</strong> ${venda.data}</span>
-                        </div>
-                    </div>
-                    
-                    ${temObservacaoServidor ? `
-                    <div class="card-notes-preview server-notes">
-                        <strong><i class="fas fa-database"></i> Observação (Servidor):</strong>
-                        <p>${this.escapeHtml(venda.observacoes)}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${temObservacaoLocal ? `
-                    <div class="card-notes-preview local-notes">
-                        <strong><i class="fas fa-sticky-note"></i> Observação (Local):</strong>
-                        <p>${this.escapeHtml(observacaoLocal)}</p>
-                    </div>
-                    ` : ''}
-                    
-                    ${venda.itens && venda.itens.length > 0 ? `
-                    <div class="card-products">
-                        <strong>Produtos Vendidos:</strong>
-                        <ul>
-                            ${venda.itens.slice(0, 3).map(item => `
-                                <li>
-                                    <span class="product-name">${item.produto?.nome || 'Produto'}</span>
-                                    <span class="product-details">${item.quantidade || 0}x - R$ ${this.formatarMoeda(item.precoUnit)}</span>
-                                </li>
-                            `).join('')}
-                            ${venda.itens.length > 3 ? `
-                                <li class="more-products">
-                                    <span class="product-name">+${venda.itens.length - 3} produtos</span>
-                                    <span class="product-details">Ver todos</span>
-                                </li>
+            `;
+            return;
+        }
+
+        container.innerHTML = vendas.map(venda => {
+            const observacaoLocal = this.obterObservacao(venda.id);
+            const temObservacaoLocal = observacaoLocal && observacaoLocal.trim() !== '';
+            const temObservacaoServidor = venda.observacoes && venda.observacoes.trim() !== '';
+            
+            return `
+                <div class="sale-card ${venda.total > 1000 ? 'high-value' : ''} ${temObservacaoLocal ? 'has-local-notes' : ''} ${temObservacaoServidor ? 'has-server-notes' : ''}">
+                    <div class="card-header">
+                        <h3>Venda #${venda.id}</h3>
+                        <div class="header-actions">
+                            ${temObservacaoServidor ? `
+                                <span class="notes-indicator server-indicator" title="Observações no servidor">
+                                    <i class="fas fa-database"></i>
+                                </span>
                             ` : ''}
-                        </ul>
+                            ${temObservacaoLocal ? `
+                                <span class="notes-indicator local-indicator" title="Observações locais">
+                                    <i class="fas fa-sticky-note"></i>
+                                </span>
+                            ` : ''}
+                            <span class="status-badge status-${(venda.status || '').toLowerCase()}">
+                                ${this.getStatusText(venda.status)}
+                            </span>
+                        </div>
                     </div>
-                    ` : ''}
+                    <div class="card-body">
+                        <div class="card-info">
+                            <div class="info-item">
+                                <i class="fas fa-user"></i>
+                                <span class="info-content"><strong>Cliente:</strong> ${venda.cliente?.nome || 'N/A'}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-user-tie"></i>
+                                <span class="info-content"><strong>Vendedor:</strong> ${venda.usuario?.nome || 'N/A'}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-calendar"></i>
+                                <span class="info-content"><strong>Data:</strong> ${venda.data}</span>
+                            </div>
+                        </div>
+                        
+                        ${temObservacaoServidor ? `
+                        <div class="card-notes-preview server-notes">
+                            <strong><i class="fas fa-database"></i> Observação (Servidor):</strong>
+                            <p>${this.escapeHtml(venda.observacoes)}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${temObservacaoLocal ? `
+                        <div class="card-notes-preview local-notes">
+                            <strong><i class="fas fa-sticky-note"></i> Observação (Local):</strong>
+                            <p>${this.escapeHtml(observacaoLocal)}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${venda.itens && venda.itens.length > 0 ? `
+                        <div class="card-products">
+                            <strong>Produtos Vendidos:</strong>
+                            <ul>
+                                ${venda.itens.slice(0, 3).map(item => `
+                                    <li>
+                                        <span class="product-name">${item.produto?.nome || 'Produto'}</span>
+                                        <span class="product-details">${item.quantidade || 0}x - R$ ${this.formatarMoeda(item.precoUnit)}</span>
+                                    </li>
+                                `).join('')}
+                                ${venda.itens.length > 3 ? `
+                                    <li class="more-products">
+                                        <span class="product-name">+${venda.itens.length - 3} produtos</span>
+                                        <span class="product-details">Ver todos</span>
+                                    </li>
+                                ` : ''}
+                            </ul>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="card-footer">
+                        <div class="card-total">
+                            Total: <span>R$ ${this.formatarMoeda(venda.total)}</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-action btn-view" data-id="${venda.id}" title="Visualizar Venda">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action btn-edit" data-id="${venda.id}" title="Editar Venda">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action btn-notes" data-id="${venda.id}" title="Gerenciar Observações">
+                                <i class="fas fa-notes-medical"></i>
+                            </button>
+                            <button class="btn-action btn-delete" data-id="${venda.id}" title="Excluir Venda">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-footer">
-                    <div class="card-total">
-                        Total: <span>R$ ${this.formatarMoeda(venda.total)}</span>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn-action btn-view" data-id="${venda.id}" title="Visualizar Venda">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn-action btn-edit" data-id="${venda.id}" title="Editar Venda">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action btn-notes" data-id="${venda.id}" title="Gerenciar Observações">
-                            <i class="fas fa-notes-medical"></i>
-                        </button>
-                        <button class="btn-action btn-delete" data-id="${venda.id}" title="Excluir Venda">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
 
-    this.adicionarEventListenersAcoes();
-}
+        this.adicionarEventListenersAcoes();
+    }
+    
     adicionarEventListenersAcoes() {
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
+                console.log('Visualizando venda ID:', id);
+                
+                if (!id || id === 'null' || id === 'undefined') {
+                    console.error('ID inválido ao visualizar venda:', id);
+                    this.mostrarNotificacao('ID da venda inválido', 'error');
+                    return;
+                }
+                
                 this.visualizarVenda(id);
             });
         });
@@ -622,6 +756,14 @@ class VendasManager {
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
+                console.log('Editando venda ID:', id);
+                
+                if (!id || id === 'null' || id === 'undefined') {
+                    console.error('ID inválido ao editar venda:', id);
+                    this.mostrarNotificacao('ID da venda inválido', 'error');
+                    return;
+                }
+                
                 this.editarVenda(id);
             });
         });
@@ -629,6 +771,14 @@ class VendasManager {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
+                console.log('Excluindo venda ID:', id);
+                
+                if (!id || id === 'null' || id === 'undefined') {
+                    console.error('ID inválido ao excluir venda:', id);
+                    this.mostrarNotificacao('ID da venda inválido', 'error');
+                    return;
+                }
+                
                 this.excluirVenda(id);
             });
         });
@@ -636,6 +786,14 @@ class VendasManager {
         document.querySelectorAll('.notes-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
+                console.log('Gerenciando observações ID:', id);
+                
+                if (!id || id === 'null' || id === 'undefined') {
+                    console.error('ID inválido para observações:', id);
+                    this.mostrarNotificacao('ID da venda inválido', 'error');
+                    return;
+                }
+                
                 this.mostrarModalGerenciarObservacoes(id);
             });
         });
@@ -749,20 +907,37 @@ class VendasManager {
             return;
         }
 
-        const totalPages = Math.ceil(this.vendasFiltradas.length / this.filtros.limit);
+        const totalVendas = this.vendasFiltradas.length;
+        const totalPages = Math.ceil(totalVendas / this.filtros.limit);
         
-        if (totalPages <= 1) {
+        // Se não houver vendas, não mostra paginação
+        if (totalVendas === 0) {
             pagination.innerHTML = '';
             return;
         }
+        
+        // Se houver apenas uma página, mostra apenas a informação
+        if (totalPages <= 1) {
+            pagination.innerHTML = `
+                <div class="pagination-info">
+                    Mostrando ${Math.min(this.filtros.limit, totalVendas)} de ${totalVendas} vendas
+                </div>
+            `;
+            return;
+        }
+
+        // Calcular itens mostrados
+        const startItem = ((this.filtros.page - 1) * this.filtros.limit) + 1;
+        const endItem = Math.min(this.filtros.page * this.filtros.limit, totalVendas);
 
         let paginationHTML = `
             <div class="pagination-info">
-                Mostrando ${Math.min(this.filtros.limit, this.vendasFiltradas.length)} de ${this.vendasFiltradas.length} vendas
+                Mostrando ${startItem} a ${endItem} de ${totalVendas} vendas
             </div>
             <div class="pagination-controls">
         `;
         
+        // Botão anterior
         if (this.filtros.page > 1) {
             paginationHTML += `
                 <button class="pagination-btn" data-page="${this.filtros.page - 1}">
@@ -771,18 +946,43 @@ class VendasManager {
             `;
         }
 
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= this.filtros.page - 2 && i <= this.filtros.page + 2)) {
-                paginationHTML += `
-                    <button class="pagination-btn ${i === this.filtros.page ? 'active' : ''}" data-page="${i}">
-                        ${i}
-                    </button>
-                `;
-            } else if (i === this.filtros.page - 3 || i === this.filtros.page + 3) {
-                paginationHTML += `<span class="pagination-ellipsis">...</span>`;
-            }
+        // Lógica melhorada para mostrar páginas
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, this.filtros.page - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        
+        // Ajustar se não temos páginas suficientes no início
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
         }
-
+        
+        // Primeira página (sempre mostrar se não for a primeira)
+        if (startPage > 1) {
+            paginationHTML += `
+                <button class="pagination-btn" data-page="1">1</button>
+                ${startPage > 2 ? '<span class="pagination-ellipsis">...</span>' : ''}
+            `;
+        }
+        
+        // Páginas do meio
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+                <button class="pagination-btn ${i === this.filtros.page ? 'active' : ''}" 
+                        data-page="${i}">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        // Última página (sempre mostrar se não for a última)
+        if (endPage < totalPages) {
+            paginationHTML += `
+                ${endPage < totalPages - 1 ? '<span class="pagination-ellipsis">...</span>' : ''}
+                <button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>
+            `;
+        }
+        
+        // Botão próximo
         if (this.filtros.page < totalPages) {
             paginationHTML += `
                 <button class="pagination-btn" data-page="${this.filtros.page + 1}">
@@ -794,18 +994,22 @@ class VendasManager {
         paginationHTML += `</div>`;
         pagination.innerHTML = paginationHTML;
 
+        // Corrigir event listener para usar currentTarget
         pagination.querySelectorAll('.pagination-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const page = parseInt(e.target.getAttribute('data-page'));
-                this.filtros.page = page;
-                this.renderizarVendas();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const page = parseInt(e.currentTarget.getAttribute('data-page'));
+                if (page !== this.filtros.page) {
+                    this.filtros.page = page;
+                    this.renderizarVendas(); // Apenas renderiza novamente (os dados já estão filtrados)
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
             });
         });
     }
 
     atualizarMetricas() {
-        if (!Array.isArray(this.vendasFiltradas)) {
+        // Usar TODAS as vendas para calcular métricas, não apenas as filtradas
+        if (!Array.isArray(this.todasVendas) || this.todasVendas.length === 0) {
             return;
         }
 
@@ -820,7 +1024,7 @@ class VendasManager {
         let completedSales = 0;
         let pendingSales = 0;
 
-        this.vendasFiltradas.forEach(venda => {
+        this.todasVendas.forEach(venda => {
             const saleDate = this.parseDate(venda.data);
             if (!saleDate) return;
 
@@ -863,12 +1067,21 @@ class VendasManager {
 
     // ========== MODAIS DE VENDAS ==========
     async visualizarVenda(id) {
+        console.log('Iniciando visualização da venda ID:', id);
+        
+        if (!id || id === 'null' || id === 'undefined') {
+            console.error('ID inválido:', id);
+            this.mostrarNotificacao('ID da venda inválido', 'error');
+            return;
+        }
+        
         try {
             const venda = await this.fetchAuth(`https://api-nexoerp.vercel.app/api/vendas/${id}`);
+            console.log('Dados da venda recebidos:', venda);
             this.mostrarModalDetalhesVenda(venda);
         } catch (error) {
             console.error('Erro ao carregar detalhes da venda:', error);
-            this.mostrarNotificacao('Erro ao carregar detalhes da venda', 'error');
+            this.mostrarNotificacao(`Erro ao carregar detalhes da venda: ${error.message}`, 'error');
         }
     }
 
@@ -1132,30 +1345,36 @@ class VendasManager {
     }
 
     obterDadosFormularioVenda() {
-    const vendaId = document.getElementById('vendaId').value;
-    const clienteId = document.getElementById('cliente').value;
-    const data = document.getElementById('data').value;
-    const status = document.getElementById('status').value;
-    const total = document.getElementById('total').value;
-    const observacoes = document.getElementById('observacoes').value;
+        const vendaId = document.getElementById('vendaId').value;
+        const clienteId = document.getElementById('cliente').value;
+        const dataInput = document.getElementById('data').value; // Formato: "YYYY-MM-DDTHH:mm"
+        const status = document.getElementById('status').value;
+        const total = document.getElementById('total').value;
+        const observacoes = document.getElementById('observacoes').value;
 
-    if (!clienteId || !data || !status || !total) {
-        throw new Error('Todos os campos obrigatórios devem ser preenchidos');
-    }
-
-    return {
-        vendaId: parseInt(vendaId),
-        dados: {
-            data: new Date(data).toISOString(),
-            status: status,
-            total: this.converterMoedaParaNumero(total),
-            observacoes: observacoes || null,
-            cliente: {
-                connect: { id: parseInt(clienteId) }
-            }
+        if (!clienteId || !dataInput || !status || !total) {
+            throw new Error('Todos os campos obrigatórios devem ser preenchidos');
         }
-    };
-} 
+
+        // Converte de "YYYY-MM-DDTHH:mm" para Date e depois para ISO
+        const dataObj = new Date(dataInput);
+        if (isNaN(dataObj.getTime())) {
+            throw new Error('Data inválida');
+        }
+
+        return {
+            vendaId: parseInt(vendaId),
+            dados: {
+                data: dataObj.toISOString(), // Envia para o backend em formato ISO
+                status: status,
+                total: this.converterMoedaParaNumero(total),
+                observacoes: observacoes || null,
+                cliente: {
+                    connect: { id: parseInt(clienteId) }
+                }
+            }
+        };
+    }
 
     async atualizarVenda({ vendaId, dados }) {
         try {
@@ -1252,12 +1471,32 @@ class VendasManager {
 
     // ========== FUNÇÕES AUXILIARES ==========
     formatarDataParaInput(dateString) {
-        if (!dateString) return '';
+        if (!dateString) {
+            console.warn('Data string vazia para formatar input');
+            return '';
+        }
         
         const date = this.parseDate(dateString);
-        if (!date) return '';
+        if (!date) {
+            console.error('Não foi possível parsear data para input:', dateString);
+            // Tenta criar uma data atual como fallback
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
         
-        return date.toISOString().slice(0, 16);
+        // Formato para input datetime-local: YYYY-MM-DDTHH:mm
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 
     escapeHtml(unsafe) {
@@ -1271,6 +1510,8 @@ class VendasManager {
     }
 
     async fetchAuth(url, options = {}) {
+        console.log('Fetch para:', url);
+        
         const config = {
             headers: {
                 'Content-Type': 'application/json',
@@ -1284,17 +1525,19 @@ class VendasManager {
         }
 
         const response = await fetch(url, config);
+        console.log('Status da resposta:', response.status);
 
         if (!response.ok) {
-            let errorMessage = `Erro ${response.status}`;
+            let errorMessage = `Erro ${response.status}: ${response.statusText}`;
             try {
                 const errorData = await response.json();
+                console.error('Detalhes do erro:', errorData);
                 errorMessage = errorData.error || errorData.message || errorMessage;
                 if (errorData.detalhes) {
                     errorMessage += ` - ${JSON.stringify(errorData.detalhes)}`;
                 }
             } catch (e) {
-                // Se não conseguir parsear o JSON, usa o status
+                console.error('Erro ao parsear resposta:', e);
             }
             throw new Error(errorMessage);
         }

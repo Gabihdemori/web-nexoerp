@@ -9,22 +9,27 @@
     <link rel="stylesheet" href="../../css/gráfico.css">
     <link rel="icon" 
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏢%3C/text%3E%3C/svg%3E">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="description" content="Sistema ERP completo para gestão de negócios">
-
-</head>
+    
+    <!-- Google Charts DEVE ser carregado no head -->
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        // Configuração do Google Charts
+        google.charts.load('current', {
+            'packages': ['corechart', 'geochart'],
+            'language': 'pt-BR'
+        });
+    </script>
+</head>
 <body>    
     
     <div class="container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar" role="navigation" aria-label="Navegação principal">
             <div class="sidebar-header">
-                </button>
                 <div class="logo" aria-label="Logo da empresa">
                     <div class="logo-icon">
                         <i class="fas fa-project-diagram"></i>
-                        </button>
                     </div>
                     <h1>NexoERP</h1>
                 </div>
@@ -77,14 +82,12 @@
                             <span>Relatórios</span>
                         </a>
                     </li>
-                    </li>
                 </ul>
             </nav>
 
             <div class="sidebar-footer">
                 <div class="user-profile">
-                   
-                    
+                    <!-- Conteúdo do perfil do usuário -->
                 </div>
             </div>
         </aside>
@@ -98,6 +101,7 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="breadcrumb">
+                        <!-- Navegação hierárquica -->
                     </div>
                 </div>
 
@@ -121,11 +125,12 @@
                                 <span id="headerUserName"></span>
                                 <i class="fas fa-chevron-down"></i>
                             </button>
-                         <div class="dropdown-menu" id="userDropdown">
-                            <a href="dropdown/perfil.html"><i class="fas fa-user"></i> Perfil</a>
-                            <a href="dropdown/configuracoes.html"><i class="fas fa-cog"></i> Configurações</a>
-                            <a href="./../login/login.html"><i class="fas fa-sign-out-alt"></i> Sair</a>
+                            <div class="dropdown-menu" id="userDropdown">
+                                <a href="dropdown/perfil.html"><i class="fas fa-user"></i> Perfil</a>
+                                <a href="dropdown/configuracoes.html"><i class="fas fa-cog"></i> Configurações</a>
+                                <a href="./../login/login.html"><i class="fas fa-sign-out-alt"></i> Sair</a>
                             </div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -150,6 +155,7 @@
                                     <h3>Vendas do Dia</h3>
                                     <p class="metric-value">R$ <span id="daily-sales-value">0,00</span></p>
                                     <div class="metric-trend positive">
+                                        <!-- Indicador de tendência -->
                                     </div>
                                 </div>
                             </div>
@@ -162,6 +168,7 @@
                                     <h3>Total de Clientes</h3>
                                     <p class="metric-value"><span id="new-clients-value">0</span></p>
                                     <div class="metric-trend positive">
+                                        <!-- Indicador de tendência -->
                                     </div>
                                 </div>
                             </div>
@@ -174,6 +181,7 @@
                                     <h3>Total Produtos em Estoque</h3>
                                     <p class="metric-value"><span id="stock-products-value">0</span></p>
                                     <div class="metric-trend positive">
+                                        <!-- Indicador de tendência -->
                                     </div>
                                 </div>
                             </div>
@@ -186,6 +194,7 @@
                                     <h3>Faturamento Mensal</h3>
                                     <p class="metric-value">R$ <span id="monthly-revenue">0,00</span></p>
                                     <div class="metric-trend positive">
+                                        <!-- Indicador de tendência -->
                                     </div>
                                 </div>
                             </div>
@@ -193,44 +202,54 @@
                     </section>
 
                     <!-- Charts Section -->
-                     <section class="charts-section" aria-labelledby="charts-heading">
-    <h2 id="charts-heading" class="sr-only">Gráficos e Visualizações</h2>
-    <div class="charts-grid">
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3>Desempenho de Vendas</h3>
-                <div class="chart-controls">
-                    <select class="chart-period" id="salesPeriod">
-                        <option value="week">Esta semana</option>
-                        <option value="month" selected>Este mês</option>
-                        <option value="quarter">Este trimestre</option>
-                        <option value="year">Este ano</option>
-                    </select>
-                    <button class="chart-option-btn" aria-label="Opções do gráfico">
-                        <i class="fas fa-ellipsis-h"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chart-container">
-                <div id="sales-chart" style="width: 100%; height: 300px;"></div>
-            </div>
-        </div>
+                    <section class="charts-section" aria-labelledby="charts-heading">
+                        <h2 id="charts-heading" class="sr-only">Gráficos e Visualizações</h2>
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Desempenho de Vendas</h3>
+                                    <div class="chart-controls">
+                                        <select class="chart-period" id="salesPeriod">
+                                            <option value="week">Esta semana</option>
+                                            <option value="month" selected>Este mês</option>
+                                            <option value="quarter">Este trimestre</option>
+                                            <option value="year">Este ano</option>
+                                        </select>
+                                        <button class="chart-option-btn" aria-label="Opções do gráfico">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chart-container">
+                                    <div id="sales-chart" style="width: 100%; height: 300px;">
+                                        <div class="chart-loading">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <p>Carregando gráfico de vendas...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3>Vendas por região</h3>
-                <div class="chart-controls">
-                    <button class="chart-option-btn" aria-label="Opções do gráfico">
-                        <i class="fas fa-ellipsis-h"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="chart-container">
-                <div id="categories-chart" style="width: 100%; height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-</section>  
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Vendas por região</h3>
+                                    <div class="chart-controls">
+                                        <button class="chart-option-btn" aria-label="Opções do gráfico">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="chart-container">
+                                    <div id="categories-chart" style="width: 100%; height: 300px;">
+                                        <div class="chart-loading">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <p>Carregando gráfico de regiões...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>  
 
                     <!-- Quick Actions -->
                     <section class="quick-actions" aria-labelledby="quick-actions-heading">
@@ -259,7 +278,6 @@
                                 <h3>Adicionar Produto</h3>
                                 <p>Cadastrar novo produto</p>
                             </a>
-                            
                         </div>
                     </section>
                 </div>
@@ -282,9 +300,33 @@
         </div>
     </div> 
     
-    
-    <script src="js/script.js"></script>
+    <!-- Scripts devem vir ANTES do fechamento do body -->
     <script src="js/funcoesui.js"></script>
+    <script src="js/script.js"></script>
+    
+    <!-- Estilos para loading -->
+    <style>
+        .chart-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .chart-loading i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #2E86AB;
+        }
+        
+        .chart-container {
+            position: relative;
+            min-height: 300px;
+        }
+    </style>
     
 </body>
 </html>

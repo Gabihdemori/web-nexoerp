@@ -1,7 +1,7 @@
 :root {
     --primary: #324b73;
     --primary-light: #79a2dd;
-    --primary-dark: #1F2937                                                                                                                             ;
+    --primary-dark: #1F2937;
     --primary-soft: #9fb4de;
     --bg-color: #F9FAFB;
     --white: #FFFFFF;
@@ -32,12 +32,14 @@ body {
     min-height: 100vh;
     display: flex;
     overflow-x: hidden;
+    font-size: 16px;
 }
 
 .main-container {
     display: flex;
     width: 100%;
     min-height: 100vh;
+    flex-wrap: wrap;
 }
 
 .login-section {
@@ -49,45 +51,49 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    padding: 3rem 3rem 3rem 4rem;
+    padding: clamp(1.5rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3rem) clamp(2rem, 5vw, 4rem);
     box-shadow: var(--shadow);
     z-index: 10;
     position: relative;
+    flex: 1 1 auto;
 }
 
 .login-header {
     text-align: left;
-    margin-bottom: 2.5rem;
+    margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
     width: 100%;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    gap: clamp(0.5rem, 1.5vw, 0.75rem);
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
     color: var(--primary);
-    font-size: 1.8rem;
+    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
     font-weight: 700;
+    flex-wrap: wrap;
 }
 
 .login-title {
-    font-size: 1.8rem;
+    font-size: clamp(1.5rem, 2.5vw, 1.8rem);
     color: var(--text-primary);
-    margin-bottom: 0.5rem;
+    margin-bottom: clamp(0.25rem, 1vw, 0.5rem);
     font-weight: 700;
+    line-height: 1.3;
 }
 
 .login-subtitle {
     color: var(--primary);
-    font-size: 1.05rem;
+    font-size: clamp(0.9rem, 1.5vw, 1.05rem);
     font-weight: 400;
+    line-height: 1.5;
 }
 
 .login-form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: clamp(1rem, 2vw, 1.5rem);
     width: 100%;
     max-width: 400px;
 }
@@ -95,28 +101,30 @@ body {
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: clamp(0.4rem, 1vw, 0.5rem);
     position: relative;
 }
 
 .form-group label {
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
     color: var(--text-primary);
     font-weight: 500;
 }
 
 .input-container {
     position: relative;
+    width: 100%;
 }
 
 .form-control {
-    padding: 0.9rem 1.2rem 0.9rem 3rem;
+    padding: clamp(0.75rem, 1.5vw, 0.9rem) clamp(1rem, 1.5vw, 1.2rem) clamp(0.75rem, 1.5vw, 0.9rem) clamp(2.5rem, 3.5vw, 3rem);
     border: 1px solid var(--gray-medium);
     border-radius: var(--border-radius);
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 1.5vw, 1rem);
     transition: var(--transition);
     width: 100%;
     background: var(--white);
+    min-height: 48px;
 }
 
 .form-control:focus {
@@ -127,15 +135,20 @@ body {
 
 .input-icon {
     position: absolute;
-    left: 1rem;
+    left: clamp(0.75rem, 1.5vw, 1rem);
     top: 50%;
     transform: translateY(-50%);
     color: var(--gray-dark);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .password-toggle {
     position: absolute;
-    right: 1rem;
+    right: clamp(0.75rem, 1.5vw, 1rem);
     top: 50%;
     transform: translateY(-50%);
     color: var(--gray-dark);
@@ -143,6 +156,11 @@ body {
     background: none;
     border: none;
     transition: var(--transition);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .password-toggle:hover {
@@ -150,17 +168,19 @@ body {
 }
 
 .btn {
-    padding: 1rem;
+    padding: clamp(0.8rem, 1.5vw, 1rem);
     border: none;
     border-radius: var(--border-radius);
-    font-size: 1.05rem;
+    font-size: clamp(0.95rem, 1.5vw, 1.05rem);
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: clamp(0.3rem, 1vw, 0.5rem);
+    min-height: 48px;
+    width: 100%;
 }
 
 .btn-primary {
@@ -172,6 +192,10 @@ body {
     background-color: var(--primary-dark);
     transform: translateY(-1px);
     box-shadow: var(--shadow-hover);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
 }
 
 .btn-loading .spinner {
@@ -189,11 +213,12 @@ body {
 }
 
 .login-footer {
-    margin-top: 1.5rem;
+    margin-top: clamp(1rem, 2vw, 1.5rem);
     text-align: left;
-    font-size: 0.95rem;
+    font-size: clamp(0.85rem, 1.5vw, 0.95rem);
     color: var(--text-secondary);
     width: 100%;
+    line-height: 1.5;
 }
 
 .login-footer a {
@@ -211,7 +236,7 @@ body {
 
 .error-message {
     color: var(--error);
-    font-size: 0.85rem;
+    font-size: clamp(0.75rem, 1.5vw, 0.85rem);
     margin-top: 0.25rem;
     display: none;
 }
@@ -228,35 +253,47 @@ body {
     justify-content: center;
     align-items: center;
     color: white;
-    padding: 2rem;
+    padding: clamp(1rem, 3vw, 2rem);
     position: relative;
     overflow: hidden;
+    min-height: 50vh;
 }
 
 .image-content {
-    max-width: 600px;
+    max-width: min(600px, 90vw);
     z-index: 2;
     text-align: center;
+    padding: 1rem;
 }
 
 .image-title {
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
     font-weight: 700;
+    line-height: 1.3;
 }
 
 .image-features {
     list-style: none;
-    margin-top: 2rem;
+    margin-top: clamp(1rem, 2vw, 2rem);
+    padding: 0;
 }
 
 .image-features li {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
+    gap: clamp(0.5rem, 1.5vw, 0.75rem);
+    margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+    font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+    flex-wrap: wrap;
+    text-align: left;
+    justify-content: flex-start;
+}
+
+.image-features li i {
+    min-width: 24px;
+    text-align: center;
 }
 
 .bg-pattern {
@@ -269,53 +306,213 @@ body {
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
+/* Media Queries Otimizadas */
 @media (max-width: 1200px) {
     .login-section {
         width: 55%;
         max-width: 100%;
+        min-width: 400px;
     }
     
     .image-title {
-        font-size: 2rem;
+        font-size: clamp(1.8rem, 3vw, 2.2rem);
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 992px) {
+    .main-container {
+        flex-direction: row;
+    }
+    
+    .login-section {
+        width: 60%;
+        min-width: auto;
+        padding: 2.5rem clamp(1.5rem, 3vw, 2.5rem);
+    }
+    
+    .image-section {
+        width: 40%;
+        min-height: 100vh;
+    }
+    
+    .image-features li {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+    
     .main-container {
         flex-direction: column;
+        min-height: auto;
     }
     
     .login-section {
         width: 100%;
         min-width: auto;
         max-width: 100%;
-        padding: 2.5rem 2rem;
+        padding: 2.5rem clamp(1.5rem, 4vw, 2.5rem);
         align-items: center;
+        min-height: auto;
+        order: 2;
     }
     
     .login-header, .login-footer {
         text-align: center;
     }
     
+    .login-form {
+        align-items: center;
+    }
+    
     .image-section {
-        display: none;
+        width: 100%;
+        min-height: 40vh;
+        order: 1;
+        padding: 2rem 1.5rem;
+    }
+    
+    .image-content {
+        max-width: 100%;
+    }
+    
+    .image-features {
+        display: none; 
+    }
+    
+    .logo {
+        justify-content: center;
     }
 }
 
 @media (max-width: 480px) {
+    .login-section {
+        padding: 2rem clamp(1rem, 3vw, 1.5rem);
+    }
+    
     .login-title {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
     
     .login-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .form-control {
+        padding: 0.75rem 0.75rem 0.75rem 2.5rem;
         font-size: 0.95rem;
     }
     
-    .form-control, .btn {
-        padding: 0.8rem 1rem;
+    .input-icon {
+        left: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.85rem;
+        font-size: 0.95rem;
+    }
+    
+    .image-section {
+        min-height: 35vh;
+        padding: 1.5rem 1rem;
+    }
+    
+    .image-title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 320px) {
+    .login-section {
+        padding: 1.5rem 1rem;
+    }
+    
+    .form-control {
+        padding: 0.7rem 0.7rem 0.7rem 2.2rem;
+    }
+    
+    .input-icon {
+        left: 0.7rem;
+    }
+    
+    .btn {
+        padding: 0.75rem;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) and (orientation: portrait) {
+    .main-container {
+        flex-direction: column;
     }
     
     .login-section {
-        padding: 2rem 1.5rem;
+        min-height: 60vh;
+    }
+    
+    .image-section {
+        min-height: 40vh;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 992px) and (orientation: landscape) {
+    .login-section {
+        padding: 2rem;
+    }
+    
+    .image-section {
+        padding: 1.5rem;
+    }
+}
+
+@media (min-width: 1600px) {
+    .login-section {
+        max-width: 600px;
+    }
+    
+    .image-content {
+        max-width: 700px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .btn-primary:hover,
+    .btn-primary:focus {
+        transform: none;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+    }
+    
+    .login-section {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+    
+    .login-title,
+    .form-group label {
+        color: #e0e0e0;
+    }
+    
+    .form-control {
+        background-color: #2d2d2d;
+        border-color: #404040;
+        color: #e0e0e0;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary);
     }
 }

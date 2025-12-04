@@ -1,5 +1,5 @@
 // =============================================
-// DASHBOARD COM GOOGLE CHARTS - VERSÃO CORRIGIDA
+// DASHBOARD COMPLETO E CORRIGIDO
 // =============================================
 
 const API_CONFIG = {
@@ -8,130 +8,282 @@ const API_CONFIG = {
     CLIENTES: "https://api-nexoerp.vercel.app/api/clientes"
 };
 
-// Carrega Google Charts
-google.charts.load('current', {'packages':['corechart']});
+// Configuração do Google Charts já está no HTML
+// Apenas definimos o callback
 google.charts.setOnLoadCallback(iniciarDashboard);
 
 async function iniciarDashboard() {
+    console.log('📊 Google Charts carregado, iniciando dashboard...');
     await carregarDados();
+    
     // Configurar event listeners
-    document.getElementById('salesPeriod').addEventListener('change', carregarDados);
+    const salesPeriod = document.getElementById('salesPeriod');
+    if (salesPeriod) {
+        salesPeriod.addEventListener('change', carregarDados);
+    }
 }
 
 // Função principal que carrega tudo
 async function carregarDados() {
     try {
-        // Busca dados das APIs
+        console.log('📊 Iniciando carregamento do dashboard...');
+        
         const [vendasData, produtosData, clientesData] = await Promise.all([
             fetch(API_CONFIG.VENDAS).then(r => r.json()).catch(erro => {
-                console.error('Erro ao carregar vendas:', erro);
-                return [];
+                console.error('❌ Erro ao carregar vendas:', erro);
+                return { vendas: [] };
             }),
             fetch(API_CONFIG.PRODUTOS).then(r => r.json()).catch(erro => {
-                console.error('Erro ao carregar produtos:', erro);
-                return [];
+                console.error('❌ Erro ao carregar produtos:', erro);
+                return { produtos: [] };
             }),
             fetch(API_CONFIG.CLIENTES).then(r => r.json()).catch(erro => {
-                console.error('Erro ao carregar clientes:', erro);
-                return [];
+                console.error('❌ Erro ao carregar clientes:', erro);
+                return { clientes: [] };
             })
         ]);
 
-        // Converte para array (funciona com qualquer formato da API)
         const vendas = Array.isArray(vendasData) ? vendasData : vendasData.vendas || vendasData.data || [];
         const produtos = Array.isArray(produtosData) ? produtosData : produtosData.produtos || produtosData.data || [];
         const clientes = Array.isArray(clientesData) ? clientesData : clientesData.clientes || clientesData.data || [];
 
-        // Atualiza os números do dashboard
-        atualizarNumeros(vendas, produtos, clientes);
+        console.log(`📊 Dados carregados: ${vendas.length} vendas, ${produtos.length} produtos, ${clientes.length} clientes`);
+        
+        // DEBUG: Verificar todas as datas
+        debugDatasDashboard(vendas);
+
+        // Atualiza TODOS os números
+        atualizarVendasDoDia(vendas);
+        atualizarTotalClientes(clientes);
+        atualizarTotalEstoque(produtos);
+        atualizarFaturamentoMensal(vendas);
         
         // Cria os gráficos
         criarGraficoVendas(vendas);
-        criarGraficoProdutosServicos(produtos);
+        criarGraficoRegioes(vendas, clientes);
         
     } catch (error) {
-        console.error('Erro ao carregar dashboard:', error);
-        // Se der erro, coloca zeros
+        console.error('❌ Erro ao carregar dashboard:', error);
         definirValoresPadrao();
     }
 }
 
-// Atualiza os números na tela
-function atualizarNumeros(vendas, produtos, clientes) {
-
-    // Total de clientes
-    document.getElementById("new-clients-value").textContent = clientes.length;
-
-    // Produtos em estoque
-    const totalEstoque = produtos.reduce((soma, produto) => soma + (parseInt(produto.estoque) || 0), 0);
-    document.getElementById("stock-products-value").textContent = totalEstoque;
-
-    // Faturamento mensal
+// Função para debug de datas no dashboard
+function debugDatasDashboard(vendas) {
+    console.log('🔍 DEBUG DATAS DASHBOARD');
+    console.log('========================');
+    
     const hoje = new Date();
-    const mesAtual = hoje.getMonth();
-    const anoAtual = hoje.getFullYear();
+    const hojeBR = hoje.toLocaleDateString('pt-BR');
+    console.log('Hoje (local):', hojeBR);
+    console.log('Hoje (ISO):', hoje.toISOString());
     
-    const vendasMes = vendas.filter(venda => {
-        if (!venda.data) return false;
-        const dataVenda = parseDate(venda.data);
-        return dataVenda.getMonth() === mesAtual && dataVenda.getFullYear() === anoAtual;
+    vendas.forEach((venda, index) => {
+        console.log(`\n📦 Venda ${index + 1}:`);
+        console.log('ID:', venda.id);
+        console.log('Data do backend:', venda.data);
+        console.log('Total:', venda.total);
+        
+        try {
+            const dataParseada = parseDate(venda.data);
+            console.log('Data parseada (local):', dataParseada.toLocaleDateString('pt-BR'));
+            console.log('Data parseada (ISO):', dataParseada.toISOString());
+            
+            const mesmoDia = dataParseada.toLocaleDateString('pt-BR') === hojeBR;
+            console.log('É hoje?', mesmoDia);
+        } catch (error) {
+            console.error('Erro ao parsear data:', error);
+        }
     });
-    
-    const faturamentoMensal = vendasMes.reduce((soma, venda) => soma + (parseFloat(venda.total) || 0), 0);
-    document.getElementById("monthly-revenue").textContent = faturamentoMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 }
 
-// Função auxiliar para converter datas
-function parseDate(dataString) {
-    // Tenta converter como Date
-    let data = new Date(dataString);
-    if (!isNaN(data.getTime())) {
-        return data;
+// Atualiza VENDAS DO DIA
+function atualizarVendasDoDia(vendas) {
+    console.log('💰 Calculando vendas do dia...');
+    
+    const hoje = new Date();
+    const hojeStr = hoje.toLocaleDateString('pt-BR'); // Formato: DD/MM/YYYY
+    
+    let totalVendasDia = 0;
+    let vendasDoDia = 0;
+    
+    vendas.forEach(venda => {
+        if (!venda.data) return;
+        
+        try {
+            // Converter data da venda para string no mesmo formato
+            const dataVendaObj = parseDate(venda.data);
+            const dataVendaStr = dataVendaObj.toLocaleDateString('pt-BR');
+            
+            if (dataVendaStr === hojeStr) {
+                const valor = parseFloat(venda.total) || 0;
+                totalVendasDia += valor;
+                vendasDoDia++;
+                console.log(`✅ Venda do dia encontrada: ${dataVendaStr} - R$ ${valor}`);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao processar venda:', venda.data, error);
+        }
+    });
+    
+    console.log(`💰 Vendas do dia: ${vendasDoDia} vendas, total: R$ ${totalVendasDia}`);
+    
+    const dailySalesElement = document.getElementById("daily-sales-value");
+    if (dailySalesElement) {
+        dailySalesElement.textContent = 
+            totalVendasDia.toLocaleString('pt-BR', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
     }
+}
 
-    // Tenta formato DD/MM/YYYY
-    const partes = dataString.split('/');
-    if (partes.length === 3) {
-        data = new Date(partes[2], partes[1] - 1, partes[0]);
-        if (!isNaN(data.getTime())) {
-            return data;
+// Atualiza TOTAL DE CLIENTES
+function atualizarTotalClientes(clientes) {
+    const newClientsElement = document.getElementById("new-clients-value");
+    if (newClientsElement) {
+        newClientsElement.textContent = clientes.length;
+    }
+}
+
+// Atualiza TOTAL DE ESTOQUE
+function atualizarTotalEstoque(produtos) {
+    const totalEstoque = produtos.reduce((soma, produto) => {
+        const estoque = parseInt(produto.estoque);
+        return isNaN(estoque) ? soma : soma + estoque;
+    }, 0);
+    
+    const stockProductsElement = document.getElementById("stock-products-value");
+    if (stockProductsElement) {
+        stockProductsElement.textContent = totalEstoque.toLocaleString('pt-BR');
+    }
+}
+
+// Atualiza FATURAMENTO MENSAL
+function atualizarFaturamentoMensal(vendas) {
+    console.log('💰 Calculando faturamento mensal...');
+    
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth(); // 0-11
+    const anoAtual = hoje.getFullYear();
+    
+    let faturamentoMensal = 0;
+    let vendasMes = 0;
+    
+    vendas.forEach(venda => {
+        if (!venda.data) return;
+        
+        try {
+            const dataVenda = parseDate(venda.data);
+            const vendaMes = dataVenda.getMonth();
+            const vendaAno = dataVenda.getFullYear();
+            
+            if (vendaMes === mesAtual && vendaAno === anoAtual) {
+                const total = parseFloat(venda.total) || 0;
+                faturamentoMensal += total;
+                vendasMes++;
+            }
+        } catch (error) {
+            console.error('❌ Erro ao processar venda:', venda.data, error);
+        }
+    });
+    
+    console.log(`💰 ${vendasMes} vendas no mês, faturamento: R$ ${faturamentoMensal}`);
+    
+    const monthlyRevenueElement = document.getElementById("monthly-revenue");
+    if (monthlyRevenueElement) {
+        monthlyRevenueElement.textContent = 
+            faturamentoMensal.toLocaleString('pt-BR', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+    }
+}
+
+// Função para converter datas - SIMPLIFICADA
+function parseDate(dataString) {
+    if (!dataString) return new Date();
+    
+    // Se já for um objeto Date
+    if (dataString instanceof Date) {
+        return dataString;
+    }
+    
+    // Remover espaços extras
+    dataString = dataString.toString().trim();
+    
+    // Formato brasileiro: DD/MM/YYYY HH:MM ou DD/MM/YYYY
+    const formatoBrasileiro = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/;
+    const match = dataString.match(formatoBrasileiro);
+    
+    if (match) {
+        const [, dia, mes, ano, horas = '00', minutos = '00'] = match;
+        
+        // Criar data no fuso horário local
+        const date = new Date(
+            parseInt(ano),
+            parseInt(mes) - 1,
+            parseInt(dia),
+            parseInt(horas),
+            parseInt(minutos)
+        );
+        
+        if (!isNaN(date.getTime())) {
+            return date;
         }
     }
-
-    // Tenta formato YYYY-MM-DD
-    data = new Date(dataString.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1'));
-    if (!isNaN(data.getTime())) {
-        return data;
+    
+    // Se for formato ISO
+    if (/^\d{4}-\d{2}-\d{2}/.test(dataString)) {
+        const date = new Date(dataString);
+        if (!isNaN(date.getTime())) {
+            return date;
+        }
     }
-
-    // Retorna data atual se não conseguir
-    console.warn('Data inválida, usando data atual:', dataString);
+    
+    // Tentar como string de data padrão
+    const date = new Date(dataString);
+    if (!isNaN(date.getTime())) {
+        return date;
+    }
+    
+    console.warn(`❌ Não foi possível converter data: "${dataString}", usando data atual`);
     return new Date();
 }
 
 // Cria gráfico de vendas
 function criarGraficoVendas(vendas) {
     try {
-        // Agrupar vendas por data
+        console.log('📈 Criando gráfico de vendas...');
+        
         const vendasPorData = {};
+        let totalVendas = 0;
         
         vendas.forEach(venda => {
             if (!venda.data) return;
             
-            const data = parseDate(venda.data);
-            const dataFormatada = data.toLocaleDateString('pt-BR');
-            const valor = parseFloat(venda.total) || 0;
-            
-            if (vendasPorData[dataFormatada]) {
-                vendasPorData[dataFormatada] += valor;
-            } else {
-                vendasPorData[dataFormatada] = valor;
+            try {
+                const data = parseDate(venda.data);
+                const dataFormatada = data.toLocaleDateString('pt-BR');
+                const valor = parseFloat(venda.total) || 0;
+                totalVendas += valor;
+                
+                if (vendasPorData[dataFormatada]) {
+                    vendasPorData[dataFormatada] += valor;
+                } else {
+                    vendasPorData[dataFormatada] = valor;
+                }
+            } catch (error) {
+                console.error('❌ Erro ao processar venda:', error);
             }
         });
 
         // Se não há dados, mostra mensagem
+        const salesChartElement = document.getElementById('sales-chart');
+        if (!salesChartElement) return;
+        
         if (Object.keys(vendasPorData).length === 0) {
-            document.getElementById('sales-chart').innerHTML = `
+            salesChartElement.innerHTML = `
                 <div style="text-align: center; padding: 50px; color: #666;">
                     <i class="fas fa-chart-line" style="font-size: 48px; margin-bottom: 20px;"></i>
                     <p>Nenhum dado de venda disponível</p>
@@ -144,28 +296,29 @@ function criarGraficoVendas(vendas) {
         const dataTable = new google.visualization.DataTable();
         dataTable.addColumn('string', 'Data');
         dataTable.addColumn('number', 'Vendas (R$)');
-        dataTable.addColumn({ type: 'string', role: 'tooltip' });
 
         // Ordenar por data
         const entries = Object.entries(vendasPorData)
             .map(([data, valor]) => {
                 const [dia, mes, ano] = data.split('/');
                 return { 
-                    dataObj: new Date(ano, mes - 1, dia), 
+                    dataObj: new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia)), 
                     dataStr: data, 
                     valor: valor 
                 };
             })
             .sort((a, b) => a.dataObj - b.dataObj);
 
-        entries.forEach(({ dataStr, valor }) => {
-            const tooltip = `Data: ${dataStr}\nVendas: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-            dataTable.addRow([dataStr, valor, tooltip]);
+        // Limitar a 15 datas para não sobrecarregar o gráfico
+        const ultimasEntradas = entries.slice(-15);
+        
+        ultimasEntradas.forEach(({ dataStr, valor }) => {
+            dataTable.addRow([dataStr, valor]);
         });
 
         // Configurações do gráfico
         const options = {
-            title: 'Vendas por Data',
+            title: 'Vendas por Data (Últimas 15 datas)',
             curveType: 'none',
             legend: { position: 'none' },
             colors: ['#2E86AB'],
@@ -180,7 +333,8 @@ function criarGraficoVendas(vendas) {
                 title: 'Valor (R$)',
                 format: 'currency',
                 currency: 'BRL',
-                textStyle: { color: '#333' }
+                textStyle: { color: '#333' },
+                minValue: 0
             },
             chartArea: {
                 width: '85%',
@@ -188,74 +342,91 @@ function criarGraficoVendas(vendas) {
                 left: 70,
                 top: 50
             },
-            tooltip: {
-                isHtml: false,
-                textStyle: { fontSize: 12 }
-            },
             pointSize: 5,
-            lineWidth: 2
+            lineWidth: 2,
+            animation: {
+                duration: 1000,
+                easing: 'out'
+            }
         };
 
-        // Criar gráfico
-        const chart = new google.visualization.LineChart(document.getElementById('sales-chart'));
+        const chart = new google.visualization.LineChart(salesChartElement);
         chart.draw(dataTable, options);
+        
+        console.log('✅ Gráfico de vendas criado com sucesso!');
 
     } catch (error) {
-        console.error('Erro ao criar gráfico de vendas:', error);
-        document.getElementById('sales-chart').innerHTML = 
-            '<div class="chart-error"><i class="fas fa-exclamation-triangle"></i><p>Erro ao carregar gráfico de vendas</p></div>';
+        console.error('❌ Erro ao criar gráfico de vendas:', error);
+        const salesChartElement = document.getElementById('sales-chart');
+        if (salesChartElement) {
+            salesChartElement.innerHTML = 
+                `<div class="chart-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Erro ao carregar gráfico de vendas</p>
+                    <p style="font-size: 12px; margin-top: 10px;">${error.message}</p>
+                </div>`;
+        }
     }
 }
 
-// Cria gráfico de Produtos vs Serviços
-function criarGraficoProdutosServicos(produtos) {
+// Cria gráfico de regiões (cidades dos clientes)
+function criarGraficoRegioes(vendas, clientes) {
     try {
-        // Contar produtos e serviços
-        let totalProdutos = 0;
-        let totalServicos = 0;
-
-        produtos.forEach(item => {
-            // Lógica para identificar (ajuste conforme sua estrutura)
-            const tipo = (item.tipo || item.categoria || '').toLowerCase();
-            const nome = (item.nome || '').toLowerCase();
-            const descricao = (item.descricao || '').toLowerCase();
-            
-            if (tipo.includes('serviço') || 
-                tipo.includes('servico') ||
-                nome.includes('serviço') ||
-                nome.includes('servico') ||
-                descricao.includes('serviço') ||
-                descricao.includes('servico')) {
-                totalServicos++;
-            } else {
-                totalProdutos++;
+        console.log('🗺️ Criando gráfico de regiões...');
+        
+        // Mapear clienteId para cidade
+        const clienteCidadeMap = {};
+        clientes.forEach(cliente => {
+            if (cliente.cidade) {
+                clienteCidadeMap[cliente.id] = cliente.cidade;
             }
         });
+        
+        // Agrupar vendas por cidade
+        const vendasPorCidade = {};
+        let totalCidades = 0;
+        
+        vendas.forEach(venda => {
+            if (venda.clienteId && clienteCidadeMap[venda.clienteId]) {
+                const cidade = clienteCidadeMap[venda.clienteId];
+                const valor = parseFloat(venda.total) || 0;
+                
+                if (vendasPorCidade[cidade]) {
+                    vendasPorCidade[cidade] += valor;
+                } else {
+                    vendasPorCidade[cidade] = valor;
+                    totalCidades++;
+                }
+            }
+        });
+        
+        console.log(`🏙️ Vendas por cidade:`, vendasPorCidade);
+
+        const categoriesChartElement = document.getElementById('categories-chart');
+        if (!categoriesChartElement) return;
+        
+        // Se não há dados, mostra gráfico de estados
+        if (Object.keys(vendasPorCidade).length === 0) {
+            criarGraficoEstados(clientes);
+            return;
+        }
 
         // Preparar dados para o gráfico
         const dataTable = new google.visualization.DataTable();
-        dataTable.addColumn('string', 'Categoria');
-        dataTable.addColumn('number', 'Quantidade');
+        dataTable.addColumn('string', 'Cidade');
+        dataTable.addColumn('number', 'Vendas (R$)');
         dataTable.addColumn({ type: 'string', role: 'tooltip' });
 
-        dataTable.addRows([
-            [
-                'Produtos', 
-                totalProdutos, 
-                `Produtos: ${totalProdutos} item(s)\n${calcularPercentual(totalProdutos, totalProdutos + totalServicos)}% do total`
-            ],
-            [
-                'Serviços', 
-                totalServicos, 
-                `Serviços: ${totalServicos} item(s)\n${calcularPercentual(totalServicos, totalProdutos + totalServicos)}% do total`
-            ]
-        ]);
+        Object.entries(vendasPorCidade).forEach(([cidade, valor]) => {
+            const tooltip = `${cidade}: R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            dataTable.addRow([cidade, valor, tooltip]);
+        });
 
         // Configurações do gráfico
         const options = {
-            title: 'Distribuição: Produtos vs Serviços',
+            title: `Vendas por Cidade (${totalCidades} cidades)`,
             pieHole: 0.4,
-            colors: ['#2E86AB', '#F18F01'],
+            colors: ['#2E86AB', '#F18F01', '#C73E1D', '#A23B72', '#2A9D8F', '#E9C46A'],
             backgroundColor: 'transparent',
             legend: {
                 position: 'labeled',
@@ -263,7 +434,7 @@ function criarGraficoProdutosServicos(produtos) {
             },
             pieSliceText: 'value',
             tooltip: {
-                text: 'percentage',
+                text: 'value',
                 showColorCode: true
             },
             chartArea: {
@@ -274,40 +445,166 @@ function criarGraficoProdutosServicos(produtos) {
             fontSize: 12
         };
 
-        // Criar gráfico
-        const chart = new google.visualization.PieChart(document.getElementById('categories-chart'));
+        const chart = new google.visualization.PieChart(categoriesChartElement);
         chart.draw(dataTable, options);
+        
+        console.log('✅ Gráfico de regiões criado com sucesso!');
 
     } catch (error) {
-        console.error('Erro ao criar gráfico de categorias:', error);
-        document.getElementById('categories-chart').innerHTML = 
-            '<div class="chart-error"><i class="fas fa-exclamation-triangle"></i><p>Erro ao carregar gráfico de categorias</p></div>';
+        console.error('❌ Erro ao criar gráfico de regiões:', error);
+        const categoriesChartElement = document.getElementById('categories-chart');
+        if (categoriesChartElement) {
+            categoriesChartElement.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #666;">
+                    <i class="fas fa-map" style="font-size: 48px; margin-bottom: 20px;"></i>
+                    <p>Gráfico de regiões</p>
+                    <p style="font-size: 14px; margin-top: 10px;">Para ver vendas por região, cadastre a cidade dos clientes</p>
+                </div>
+            `;
+        }
     }
 }
 
-// Função auxiliar para calcular percentual
-function calcularPercentual(parte, total) {
-    if (total === 0) return 0;
-    return ((parte / total) * 100).toFixed(1);
+function criarGraficoEstados(clientes) {
+    try {
+        console.log('🏛️ Criando gráfico de estados...');
+        
+        // Agrupar clientes por estado
+        const clientesPorEstado = {};
+        
+        clientes.forEach(cliente => {
+            if (cliente.estado) {
+                const estado = cliente.estado.toUpperCase();
+                if (clientesPorEstado[estado]) {
+                    clientesPorEstado[estado]++;
+                } else {
+                    clientesPorEstado[estado] = 1;
+                }
+            }
+        });
+        
+        const categoriesChartElement = document.getElementById('categories-chart');
+        if (!categoriesChartElement) return;
+        
+        if (Object.keys(clientesPorEstado).length === 0) {
+            categoriesChartElement.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #666;">
+                    <i class="fas fa-map-marker-alt" style="font-size: 48px; margin-bottom: 20px;"></i>
+                    <p>Nenhum dado de localização disponível</p>
+                </div>
+            `;
+            return;
+        }
+
+        const dataTable = new google.visualization.DataTable();
+        dataTable.addColumn('string', 'Estado');
+        dataTable.addColumn('number', 'Clientes');
+
+        Object.entries(clientesPorEstado).forEach(([estado, quantidade]) => {
+            dataTable.addRow([estado, quantidade]);
+        });
+
+        const options = {
+            title: 'Clientes por Estado',
+            pieHole: 0.4,
+            colors: ['#2E86AB', '#F18F01', '#C73E1D', '#A23B72'],
+            backgroundColor: 'transparent',
+            legend: {
+                position: 'labeled',
+                textStyle: { color: '#333', fontSize: 12 }
+            },
+            pieSliceText: 'value',
+            chartArea: {
+                width: '90%',
+                height: '80%',
+                top: 20
+            }
+        };
+
+        const chart = new google.visualization.PieChart(categoriesChartElement);
+        chart.draw(dataTable, options);
+        
+    } catch (error) {
+        console.error('Erro ao criar gráfico de estados:', error);
+    }
 }
 
-// Define valores padrão em caso de erro
 function definirValoresPadrao() {
-    document.getElementById("daily-sales-value").textContent = "0,00";
-    document.getElementById("stock-products-value").textContent = "0";
-    document.getElementById("new-clients-value").textContent = "0";
-    document.getElementById("monthly-revenue").textContent = "0,00";
+    console.log('⚠️ Definindo valores padrão');
+    
+    const elements = {
+        'daily-sales-value': '0,00',
+        'stock-products-value': '0',
+        'new-clients-value': '0',
+        'monthly-revenue': '0,00'
+    };
+    
+    Object.entries(elements).forEach(([id, valor]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = valor;
+        }
+    });
 }
 
-// Inicialização quando DOM estiver pronto
+// Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📊 Dashboard inicializado');
     
-    // Se Google Charts já carregou, inicialize
+    // Verificar se Google Charts está carregado
     if (typeof google !== 'undefined' && google.charts) {
-        google.charts.setOnLoadCallback(iniciarDashboard);
+        console.log('✅ Google Charts disponível');
+        // O callback já está configurado no head
+    } else {
+        console.error('❌ Google Charts não carregado');
+        
+        // Mostrar mensagem de erro
+        const salesChart = document.getElementById('sales-chart');
+        const categoriesChart = document.getElementById('categories-chart');
+        
+        if (salesChart) {
+            salesChart.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #e74c3c;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                    <p>Erro ao carregar Google Charts</p>
+                    <p style="font-size: 14px;">Atualize a página ou verifique sua conexão</p>
+                </div>
+            `;
+        }
+        
+        if (categoriesChart) {
+            categoriesChart.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #e74c3c;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                    <p>Erro ao carregar Google Charts</p>
+                </div>
+            `;
+        }
     }
+    
+    // Atualização automática a cada 2 minutos
+    setInterval(() => {
+        console.log('🔄 Atualização automática do dashboard');
+        carregarDados();
+    }, 120000);
 });
 
-// Atualização automática a cada 2 minutos
-setInterval(carregarDados, 120000);
+// Adicione estilos para mensagens de erro
+const style = document.createElement('style');
+style.textContent = `
+    .chart-error {
+        text-align: center;
+        padding: 50px;
+        color: #666;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+    .chart-error i {
+        font-size: 48px;
+        margin-bottom: 20px;
+        display: block;
+        color: #dc3545;
+    }
+`;
+document.head.appendChild(style);

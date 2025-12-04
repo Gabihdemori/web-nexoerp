@@ -1,10 +1,10 @@
-// clientes.js - VERSÃO COMPLETA CORRIGIDA
+// clientes.js - VERSÃO COMPLETA E FUNCIONAL COM PAGINAÇÃO SERVER-SIDE
 
 const API_CONFIG = {
     CLIENTES: "https://api-nexoerp.vercel.app/api/clientes"
 };
 
-// Estado da aplicação para clientes
+// Estado da aplicação
 const appState = {
     clientes: [],
     currentPage: 1,
@@ -14,16 +14,14 @@ const appState = {
         tipo: '',
         cidade: ''
     },
-    metrics: {
+    pagination: {
         total: 0,
-        novosEsteMes: 0,
-        cidadesDiferentes: 0,
-        comVendas: 0
+        totalPages: 1
     },
     currentView: 'table'
 };
 
-// Elementos DOM para clientes
+// Elementos DOM
 const elements = {
     clientsTableBody: document.getElementById('clientsTableBody'),
     cardsView: document.getElementById('cardsView'),
@@ -43,7 +41,7 @@ const elements = {
     exportBtn: document.getElementById('exportBtn')
 };
 
-// Inicialização
+// ========== INICIALIZAÇÃO ==========
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
@@ -60,71 +58,52 @@ async function initializeApp() {
     }
 }
 
+// ========== CONFIGURAÇÃO DE EVENTOS ==========
 function setupEventListeners() {
-
-    console.log('🔧 Configurando event listeners...');
-    
-    console.log('📍 Elementos encontrados:');
-    console.log('- typeFilter:', elements.typeFilter);
-    console.log('- cityFilter:', elements.cityFilter);
-    console.log('- searchFilter:', elements.searchFilter);
-    console.log('- itemsPerPage:', elements.itemsPerPage);
-    console.log('- exportBtn:', elements.exportBtn);
-
+    // Filtros
     if (elements.typeFilter) {
-        elements.typeFilter.addEventListener('change', handleFilterChange);
-        console.log('✅ typeFilter event listener adicionado');
-    } else {
-        console.log('❌ typeFilter não encontrado');
+        elements.typeFilter.addEventListener('change', () => {
+            appState.filters.tipo = elements.typeFilter.value;
+            appState.currentPage = 1;
+            loadClientesData();
+        });
     }
 
     if (elements.cityFilter) {
-        elements.cityFilter.addEventListener('change', handleFilterChange);
-        console.log('✅ cityFilter event listener adicionado');
-    } else {
-        console.log('❌ cityFilter não encontrado');
+        elements.cityFilter.addEventListener('change', () => {
+            appState.filters.cidade = elements.cityFilter.value;
+            appState.currentPage = 1;
+            loadClientesData();
+        });
     }
 
+    // Busca
     if (elements.searchFilter) {
-        elements.searchFilter.addEventListener('input', debounce(handleSearch, 300));
-        console.log('✅ searchFilter event listener adicionado');
+        elements.searchFilter.addEventListener('input', debounce(() => {
+            appState.searchTerm = elements.searchFilter.value;
+            appState.currentPage = 1;
+            loadClientesData();
+        }, 500));
     }
 
+    // Items por página
     if (elements.itemsPerPage) {
-        elements.itemsPerPage.addEventListener('change', handleItemsPerPageChange);
-        console.log('✅ itemsPerPage event listener adicionado');
+        elements.itemsPerPage.addEventListener('change', () => {
+            appState.itemsPerPage = parseInt(elements.itemsPerPage.value);
+            appState.currentPage = 1;
+            loadClientesData();
+        });
     }
 
+    // Botões de ação
     if (elements.addClientBtn) {
-        elements.addClientBtn.addEventListener('click', function() {
+        elements.addClientBtn.addEventListener('click', () => {
             window.location.href = 'Nova Tabela/novo_cliente.html';
         });
-        console.log('✅ addClientBtn event listener adicionado');
     }
 
     if (elements.exportBtn) {
         elements.exportBtn.addEventListener('click', showExportOptions);
-        console.log('✅ exportBtn event listener adicionado');
-    } else {
-        console.log('❌ exportBtn não encontrado');
-    }
-
-    if (elements.typeFilter) {
-        elements.typeFilter.addEventListener('change', handleFilterChange);
-    }
-    if (elements.cityFilter) {
-        elements.cityFilter.addEventListener('change', handleFilterChange);
-    }
-    if (elements.searchFilter) {
-        elements.searchFilter.addEventListener('input', debounce(handleSearch, 300));
-    }
-    if (elements.itemsPerPage) {
-        elements.itemsPerPage.addEventListener('change', handleItemsPerPageChange);
-    }
-    if (elements.addClientBtn) {
-        elements.addClientBtn.addEventListener('click', function() {
-            window.location.href = 'Nova Tabela/novo_cliente.html';
-        });
     }
 
     document.addEventListener('click', function(e) {
@@ -141,37 +120,29 @@ function setupEventListeners() {
     });
 }
 
-function setupViewToggle() {
-    elements.viewButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const viewType = this.getAttribute('data-view');
-            elements.viewButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            appState.currentView = viewType;
-            
-            if (viewType === 'table') {
-                elements.tableView.style.display = 'block';
-                elements.cardsViewContainer.style.display = 'none';
-            } else {
-                elements.tableView.style.display = 'none';
-                elements.cardsViewContainer.style.display = 'grid';
-            }
-            
-            renderClientes();
-        });
-    });
-}
-
+// ========== CARREGAMENTO DE DADOS COM PAGINAÇÃO SERVER-SIDE ==========
 async function loadClientesData() {
     try {
         showLoadingState();
         
         const token = localStorage.getItem('token');
         if (!token) {
-            throw new Error('Usuário não autenticado');
+            window.location.href = '/login.html';
+            return;
         }
 
-        const response = await fetch(API_CONFIG.CLIENTES, {
+        // Construir URL com parâmetros para paginação server-side
+        const params = new URLSearchParams();
+        params.append('page', appState.currentPage);
+        params.append('limit', appState.itemsPerPage);
+        
+        if (appState.searchTerm) params.append('search', appState.searchTerm);
+        if (appState.filters.tipo) params.append('tipo', appState.filters.tipo);
+        if (appState.filters.cidade) params.append('cidade', appState.filters.cidade);
+
+        const url = `${API_CONFIG.CLIENTES}?${params.toString()}`;
+        
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -184,13 +155,33 @@ async function loadClientesData() {
 
         const result = await response.json();
         
-        // A API retorna { success: true, data: [], pagination: {} }
-        appState.clientes = result.data || result.clientes || [];
+        // A API retorna { clientes: [], paginacao: {} } ou { data: [], pagination: {} }
+        appState.clientes = result.clientes || result.data || [];
         
-        calculateMetrics(appState.clientes);
-        populateCityFilter(appState.clientes);
+        // Configuração da paginação
+        if (result.paginacao) {
+            appState.pagination = {
+                total: result.paginacao.total || 0,
+                totalPages: result.paginacao.totalPages || 1,
+                page: result.paginacao.page || appState.currentPage,
+                limit: result.paginacao.limit || appState.itemsPerPage
+            };
+        } else if (result.pagination) {
+            appState.pagination = result.pagination;
+        } else {
+            appState.pagination = {
+                total: appState.clientes.length,
+                totalPages: 1,
+                page: appState.currentPage,
+                limit: appState.itemsPerPage
+            };
+        }
+        
+        // Atualizar interface
+        updateMetrics();
+        populateCityFilter();
         renderClientes();
-        renderMetrics();
+        renderPagination();
         
     } catch (error) {
         console.error('Erro ao carregar clientes:', error);
@@ -204,44 +195,12 @@ async function loadClientesData() {
     }
 }
 
-function calculateMetrics(clientes) {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    appState.metrics.total = clientes.length;
-    
-    // Novos este mês - baseado na data de criação
-    appState.metrics.novosEsteMes = clientes.filter(cliente => {
-        if (!cliente.criadoEm) return false;
-        try {
-            const dataCad = parseDate(cliente.criadoEm);
-            return dataCad.getMonth() === currentMonth && dataCad.getFullYear() === currentYear;
-        } catch {
-            return false;
-        }
-    }).length;
-    
-    // Cidades diferentes
-    const cidadesUnicas = new Set(
-        clientes
-            .map(cliente => cliente.cidade)
-            .filter(Boolean)
-            .map(cidade => cidade.trim().toLowerCase())
-    );
-    appState.metrics.cidadesDiferentes = cidadesUnicas.size;
-    
-    // Clientes com vendas
-    appState.metrics.comVendas = clientes.filter(cliente => 
-        cliente.totalVendas > 0 || (cliente._count && cliente._count.vendas > 0)
-    ).length;
-}
-
-function populateCityFilter(clientes) {
+function populateCityFilter() {
     if (!elements.cityFilter) return;
     
+    // Buscar todas as cidades disponíveis da API
     const cidades = [...new Set(
-        clientes
+        appState.clientes
             .map(cliente => cliente.cidade)
             .filter(cidade => cidade && cidade.trim() !== '')
             .map(cidade => cidade.trim())
@@ -251,126 +210,24 @@ function populateCityFilter(clientes) {
         cidades.map(cidade => `<option value="${cidade}">${cidade}</option>`).join('');
 }
 
-function renderMetrics() {
-    if (elements.totalClients) elements.totalClients.textContent = appState.metrics.total.toLocaleString();
-    if (elements.activeClients) elements.activeClients.textContent = appState.metrics.total.toLocaleString();
-    if (elements.newThisMonth) elements.newThisMonth.textContent = appState.metrics.novosEsteMes.toLocaleString();
-    if (elements.differentCities) elements.differentCities.textContent = appState.metrics.cidadesDiferentes.toLocaleString();
-}
-
-function handleFilterChange(e) {
-    const filterName = e.target.id.replace('Filter', '');
-    appState.filters[filterName] = e.target.value;
-    appState.currentPage = 1;
-    
-    console.log('🔍 Filtro alterado:', filterName, '=', e.target.value);
-    console.log('📊 Estado atual dos filtros:', appState.filters);
-    
-    renderClientes();
-}
-
-function handleSearch(e) {
-    appState.searchTerm = e.target.value.trim();
-    appState.currentPage = 1;
-    renderClientes();
-}
-
-function handleItemsPerPageChange(e) {
-    appState.itemsPerPage = parseInt(e.target.value);
-    appState.currentPage = 1;
-    renderClientes();
-}
-
+// ========== RENDERIZAÇÃO ==========
 function renderClientes() {
-    const filteredClientes = filterClientes(appState.clientes);
-    const paginatedClientes = paginateClientes(filteredClientes);
-    
-    console.log('📈 Clientes filtrados:', filteredClientes.length);
-    console.log('🎯 Filtros ativos:', appState.filters);
-    
     if (appState.currentView === 'table') {
-        renderTableView(paginatedClientes, filteredClientes.length);
+        renderTableView();
     } else {
-        renderCardsView(paginatedClientes, filteredClientes.length);
+        renderCardsView();
     }
-    
-    renderPagination(filteredClientes.length);
 }
 
-function filterClientes(clientes) {
-    console.log('🎯 Aplicando filtros:', {
-        searchTerm: appState.searchTerm,
-        tipo: appState.filters.tipo,
-        cidade: appState.filters.cidade
-    });
-
-    const filtered = clientes.filter(cliente => {
-        const searchLower = appState.searchTerm.toLowerCase();
-        const matchesSearch = !appState.searchTerm || 
-            (cliente.nome && cliente.nome.toLowerCase().includes(searchLower)) ||
-            (cliente.email && cliente.email.toLowerCase().includes(searchLower)) ||
-            (cliente.telefone && cliente.telefone.includes(appState.searchTerm)) ||
-            (cliente.cpf && cliente.cpf && cliente.cpf.includes(appState.searchTerm)) ||
-            (cliente.cnpj && cliente.cnpj && cliente.cnpj.includes(appState.searchTerm));
-        
-        // CORREÇÃO: Filtro por tipo mais robusto
-        let matchesTipo = true;
-        if (appState.filters.tipo) {
-            if (appState.filters.tipo === 'PF') {
-                matchesTipo = cliente.cpf && !cliente.cnpj;
-            } else if (appState.filters.tipo === 'PJ') {
-                matchesTipo = cliente.cnpj && !cliente.cpf;
-            }
-        }
-        
-        // CORREÇÃO: Filtro por cidade mais robusto
-        let matchesCidade = true;
-        if (appState.filters.cidade) {
-            if (cliente.cidade) {
-                matchesCidade = cliente.cidade.trim().toLowerCase() === appState.filters.cidade.trim().toLowerCase();
-            } else {
-                matchesCidade = false;
-            }
-        }
-        
-        const matches = matchesSearch && matchesTipo && matchesCidade;
-        
-        // Debug individual para cada cliente
-        if (appState.filters.tipo || appState.filters.cidade) {
-            console.log(`👤 Cliente ${cliente.nome}:`, {
-                nome: cliente.nome,
-                cpf: cliente.cpf,
-                cnpj: cliente.cnpj,
-                cidade: cliente.cidade,
-                matchesSearch,
-                matchesTipo,
-                matchesCidade,
-                matches
-            });
-        }
-        
-        return matches;
-    });
-
-    console.log(`📊 Resultado da filtragem: ${filtered.length} de ${clientes.length} clientes`);
-    return filtered;
-}
-
-
-function paginateClientes(clientes) {
-    const startIndex = (appState.currentPage - 1) * appState.itemsPerPage;
-    return clientes.slice(startIndex, startIndex + appState.itemsPerPage);
-}
-
-function renderTableView(clientes, totalClientes) {
+function renderTableView() {
     if (!elements.clientsTableBody) return;
 
-    if (clientes.length === 0) {
+    if (appState.clientes.length === 0) {
         elements.clientsTableBody.innerHTML = `
             <tr>
                 <td colspan="7" class="empty-state">
                     <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                        <i class="" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                         <p style="font-size: 1.1rem; margin: 0;">Nenhum cliente encontrado</p>
                         <small style="font-size: 0.9rem;">Tente ajustar os filtros ou adicionar um novo cliente</small>
                     </div>
@@ -380,12 +237,12 @@ function renderTableView(clientes, totalClientes) {
         return;
     }
     
-    elements.clientsTableBody.innerHTML = clientes.map(cliente => `
+    elements.clientsTableBody.innerHTML = appState.clientes.map(cliente => `
         <tr>
             <td>
                 <div class="user-cell">
-                    <div class="">
-                        <i class=""></i>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
                     </div>
                     <div class="user-info-small">
                         <div class="user-name">${escapeHtml(cliente.nome || 'Não informado')}</div>
@@ -437,10 +294,10 @@ function renderTableView(clientes, totalClientes) {
     `).join('');
 }
 
-function renderCardsView(clientes, totalClientes) {
+function renderCardsView() {
     if (!elements.cardsViewContainer) return;
 
-    if (clientes.length === 0) {
+    if (appState.clientes.length === 0) {
         elements.cardsViewContainer.innerHTML = `
             <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-secondary);">
                 <i class="fas fa-users" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
@@ -451,7 +308,7 @@ function renderCardsView(clientes, totalClientes) {
         return;
     }
     
-    elements.cardsViewContainer.innerHTML = clientes.map(cliente => `
+    elements.cardsViewContainer.innerHTML = appState.clientes.map(cliente => `
         <div class="client-card">
             <div class="card-header">
                 <div class="client-avatar">
@@ -500,26 +357,33 @@ function renderCardsView(clientes, totalClientes) {
     `).join('');
 }
 
-function renderPagination(totalClientes) {
+// ========== PAGINAÇÃO SERVER-SIDE ==========
+function renderPagination() {
     if (!elements.pagination) return;
 
-    const totalPages = Math.ceil(totalClientes / appState.itemsPerPage);
+    const pag = appState.pagination;
+    const totalPages = pag.totalPages || 1;
     
     if (totalPages <= 1) {
-        elements.pagination.innerHTML = '';
+        elements.pagination.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                <div>Mostrando ${appState.clientes.length} de ${pag.total || appState.clientes.length} clientes</div>
+            </div>
+        `;
         return;
     }
     
     let paginationHTML = `
-        <div class="pagination-info">
-            Mostrando ${Math.min(appState.itemsPerPage, totalClientes)} de ${totalClientes} clientes
-        </div>
-        <div class="pagination-controls">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+            <div>Mostrando ${appState.clientes.length} de ${pag.total} clientes</div>
+            <div style="display: flex; gap: 5px;">
     `;
     
     // Botão anterior
     paginationHTML += `
-        <button class="pagination-btn" ${appState.currentPage === 1 ? 'disabled' : ''} onclick="changePage(${appState.currentPage - 1})">
+        <button onclick="changePage(${appState.currentPage - 1})" 
+                ${appState.currentPage === 1 ? 'disabled' : ''}
+                style="padding: 5px 10px; border: 1px solid #ddd; background: ${appState.currentPage === 1 ? '#f5f5f5' : 'white'}; color: ${appState.currentPage === 1 ? '#aaa' : '#333'}; cursor: ${appState.currentPage === 1 ? 'not-allowed' : 'pointer'}; border-radius: 4px;">
             <i class="fas fa-chevron-left"></i>
         </button>
     `;
@@ -533,43 +397,110 @@ function renderPagination(totalClientes) {
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
     
-    // Primeira página e ellipsis
+    // Primeira página
     if (startPage > 1) {
-        paginationHTML += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
-        if (startPage > 2) {
-            paginationHTML += `<span class="pagination-ellipsis">...</span>`;
-        }
+        paginationHTML += `<button onclick="changePage(1)" style="padding: 5px 10px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 4px;">1</button>`;
+        if (startPage > 2) paginationHTML += `<span style="padding: 5px 10px;">...</span>`;
     }
     
     // Páginas do meio
     for (let i = startPage; i <= endPage; i++) {
         paginationHTML += `
-            <button class="pagination-btn ${i === appState.currentPage ? 'active' : ''}" onclick="changePage(${i})">
+            <button onclick="changePage(${i})" 
+                    style="padding: 5px 10px; border: 1px solid #ddd; background: ${i === appState.currentPage ? '#3498db' : 'white'}; color: ${i === appState.currentPage ? 'white' : '#333'}; cursor: pointer; border-radius: 4px;">
                 ${i}
             </button>
         `;
     }
     
-    // Última página e ellipsis
+    // Última página
     if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            paginationHTML += `<span class="pagination-ellipsis">...</span>`;
-        }
-        paginationHTML += `<button class="pagination-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+        if (endPage < totalPages - 1) paginationHTML += `<span style="padding: 5px 10px;">...</span>`;
+        paginationHTML += `<button onclick="changePage(${totalPages})" style="padding: 5px 10px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 4px;">${totalPages}</button>`;
     }
     
     // Botão próximo
     paginationHTML += `
-        <button class="pagination-btn" ${appState.currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${appState.currentPage + 1})">
+        <button onclick="changePage(${appState.currentPage + 1})" 
+                ${appState.currentPage === totalPages ? 'disabled' : ''}
+                style="padding: 5px 10px; border: 1px solid #ddd; background: ${appState.currentPage === totalPages ? '#f5f5f5' : 'white'}; color: ${appState.currentPage === totalPages ? '#aaa' : '#333'}; cursor: ${appState.currentPage === totalPages ? 'not-allowed' : 'pointer'}; border-radius: 4px;">
             <i class="fas fa-chevron-right"></i>
         </button>
     `;
     
-    paginationHTML += `</div>`;
+    paginationHTML += `</div></div>`;
     elements.pagination.innerHTML = paginationHTML;
 }
 
-// ========== MODAL DE DETALHES DO CLIENTE ==========
+function changePage(page) {
+    if (page >= 1 && page <= appState.pagination.totalPages) {
+        appState.currentPage = page;
+        loadClientesData();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+// ========== MÉTRICAS ==========
+function updateMetrics() {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    // Calcular métricas baseadas nos clientes retornados
+    const total = appState.pagination.total || appState.clientes.length;
+    const novosEsteMes = appState.clientes.filter(cliente => {
+        if (!cliente.criadoEm) return false;
+        try {
+            const dataCad = parseDate(cliente.criadoEm);
+            return dataCad.getMonth() === currentMonth && dataCad.getFullYear() === currentYear;
+        } catch {
+            return false;
+        }
+    }).length;
+    
+    const cidadesDiferentes = new Set(
+        appState.clientes
+            .map(cliente => cliente.cidade)
+            .filter(Boolean)
+            .map(cidade => cidade.trim().toLowerCase())
+    ).size;
+    
+    const comVendas = appState.clientes.filter(cliente => 
+        cliente.totalVendas > 0
+    ).length;
+    
+    // Atualizar elementos
+    if (elements.totalClients) elements.totalClients.textContent = total.toLocaleString();
+    if (elements.activeClients) elements.activeClients.textContent = total.toLocaleString();
+    if (elements.newThisMonth) elements.newThisMonth.textContent = novosEsteMes.toLocaleString();
+    if (elements.differentCities) elements.differentCities.textContent = cidadesDiferentes.toLocaleString();
+}
+
+// ========== TOGGLE DE VISUALIZAÇÃO ==========
+function setupViewToggle() {
+    if (!elements.viewButtons) return;
+    
+    elements.viewButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const viewType = this.getAttribute('data-view');
+            elements.viewButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            appState.currentView = viewType;
+            
+            if (viewType === 'table') {
+                elements.tableView.style.display = 'block';
+                elements.cardsViewContainer.style.display = 'none';
+            } else {
+                elements.tableView.style.display = 'none';
+                elements.cardsViewContainer.style.display = 'grid';
+            }
+            
+            renderClientes();
+        });
+    });
+}
+
+// ========== MODAL DE DETALHES ==========
 async function mostrarDetalhesCliente(clienteId) {
     try {
         const token = localStorage.getItem('token');
@@ -581,145 +512,85 @@ async function mostrarDetalhesCliente(clienteId) {
         });
 
         if (!response.ok) {
-            throw new Error('Erro ao carregar detalhes do cliente');
+            throw new Error('Erro ao carregar detalhes');
         }
-
+        
         const result = await response.json();
         const cliente = result.data || result;
-        
         mostrarModalDetalhes(cliente);
     } catch (error) {
-        console.error('Erro ao carregar detalhes do cliente:', error);
-        showNotification('Erro ao carregar detalhes do cliente', 'error');
+        console.error('Erro:', error);
+        showNotification('Erro ao carregar detalhes: ' + error.message, 'error');
     }
 }
 
 function mostrarModalDetalhes(cliente) {
-    // CORREÇÃO: Obter informações corretas do usuário que cadastrou
     const usuarioCadastro = cliente.usuario ? cliente.usuario.nome : 
                           (cliente.usuarioNome || 'Sistema');
     
-    // CORREÇÃO: Calcular total de vendas corretamente
     const totalVendas = cliente.totalVendas || 
                        (cliente._count && cliente._count.vendas) || 
                        (cliente.vendas && cliente.vendas.length) || 
                        0;
     
-    // CORREÇÃO: Garantir que mostra apenas observações do cliente, não de vendas
     const observacoesCliente = cliente.observacoes || 'Nenhuma observação cadastrada.';
 
     const modalHTML = `
         <div class="modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;">
             <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto;">
-                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
                     <h3 style="margin: 0; color: #333;">Detalhes do Cliente</h3>
                     <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
                 </div>
-                <div class="modal-body">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <!-- Coluna 1: Informações Pessoais -->
-                        <div class="info-section">
-                            <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #007bff; padding-bottom: 5px;">Informações Pessoais</h4>
-                            <div class="detail-grid" style="display: grid; gap: 12px;">
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Nome:</strong> 
-                                    <span>${escapeHtml(cliente.nome || 'Não informado')}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Email:</strong> 
-                                    <span>${escapeHtml(cliente.email || 'Não informado')}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Telefone:</strong> 
-                                    <span>${cliente.telefone ? formatarTelefone(cliente.telefone) : 'Não informado'}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">CPF:</strong> 
-                                    <span>${cliente.cpf ? formatarCPF(cliente.cpf) : 'Não informado'}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">CNPJ:</strong> 
-                                    <span>${cliente.cnpj ? formatarCNPJ(cliente.cnpj) : 'Não informado'}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Data de Nascimento:</strong> 
-                                    <span>${cliente.dataNascimento ? formatarDataParaExibicao(cliente.dataNascimento) : 'Não informada'}</span>
-                                </div>
+                <div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <h4 style="margin: 0 0 15px 0; color: #555;">Informações Pessoais</h4>
+                            <div style="display: grid; gap: 10px;">
+                                <div><strong>Nome:</strong> ${escapeHtml(cliente.nome || 'Não informado')}</div>
+                                <div><strong>Email:</strong> ${escapeHtml(cliente.email || 'Não informado')}</div>
+                                <div><strong>Telefone:</strong> ${cliente.telefone ? formatarTelefone(cliente.telefone) : 'Não informado'}</div>
+                                <div><strong>CPF:</strong> ${cliente.cpf ? formatarCPF(cliente.cpf) : 'Não informado'}</div>
+                                <div><strong>CNPJ:</strong> ${cliente.cnpj ? formatarCNPJ(cliente.cnpj) : 'Não informado'}</div>
+                                <div><strong>Data Nasc.:</strong> ${cliente.dataNascimento ? formatarDataParaExibicao(cliente.dataNascimento) : 'Não informada'}</div>
                             </div>
                         </div>
-
-                        <!-- Coluna 2: Endereço -->
-                        <div class="info-section">
-                            <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #28a745; padding-bottom: 5px;">Endereço</h4>
-                            <div class="detail-grid" style="display: grid; gap: 12px;">
-                                <div class="detail-row">
-                                    <strong style="color: #333;">CEP:</strong> 
-                                    <span>${cliente.cep || 'Não informado'}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Rua:</strong> 
-                                    <span>${escapeHtml(cliente.rua || 'Não informado')}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Número:</strong> 
-                                    <span>${cliente.numero || 'Não informado'}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Complemento:</strong> 
-                                    <span>${escapeHtml(cliente.complemento || 'Não informado')}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Bairro:</strong> 
-                                    <span>${escapeHtml(cliente.bairro || 'Não informado')}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Cidade:</strong> 
-                                    <span>${escapeHtml(cliente.cidade || 'Não informado')}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong style="color: #333;">Estado:</strong> 
-                                    <span>${cliente.estado || 'Não informado'}</span>
-                                </div>
+                        <div>
+                            <h4 style="margin: 0 0 15px 0; color: #555;">Endereço</h4>
+                            <div style="display: grid; gap: 10px;">
+                                <div><strong>CEP:</strong> ${cliente.cep || 'Não informado'}</div>
+                                <div><strong>Rua:</strong> ${escapeHtml(cliente.rua || 'Não informado')}</div>
+                                <div><strong>Número:</strong> ${cliente.numero || 'Não informado'}</div>
+                                <div><strong>Complemento:</strong> ${escapeHtml(cliente.complemento || 'Não informado')}</div>
+                                <div><strong>Bairro:</strong> ${escapeHtml(cliente.bairro || 'Não informado')}</div>
+                                <div><strong>Cidade:</strong> ${escapeHtml(cliente.cidade || 'Não informado')}</div>
+                                <div><strong>Estado:</strong> ${cliente.estado || 'Não informado'}</div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Observações (CORREÇÃO: Apenas observações do cliente) -->
-                    <div class="info-section" style="margin-top: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #ffc107; padding-bottom: 5px;">Observações do Cliente</h4>
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #ffc107;">
-                            <p style="margin: 0; color: #666; white-space: pre-wrap;">${escapeHtml(observacoesCliente)}</p>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 15px 0; color: #555;">Observações</h4>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
+                            <p style="margin: 0; color: #666;">${escapeHtml(observacoesCliente)}</p>
                         </div>
                     </div>
-
-                    <!-- Informações do Sistema (CORREÇÃO: Informações corretas) -->
-                    <div class="info-section" style="margin-top: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #6c757d; padding-bottom: 5px;">Informações do Sistema</h4>
-                        <div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div class="detail-row">
-                                <strong style="color: #333;">Cadastrado por:</strong> 
-                                <span>${escapeHtml(usuarioCadastro)}</span>
-                            </div>
-                            <div class="detail-row">
-                                <strong style="color: #333;">Criado em:</strong> 
-                                <span>${cliente.criadoEm ? formatarDataHora(cliente.criadoEm) : 'Não informado'}</span>
-                            </div>
-                            <div class="detail-row">
-                                <strong style="color: #333;">Atualizado em:</strong> 
-                                <span>${cliente.atualizadoEm ? formatarDataHora(cliente.atualizadoEm) : 'Não informado'}</span>
-                            </div>
-                            <div class="detail-row">
-                                <strong style="color: #333;">Total de Vendas:</strong> 
-                                <span>${totalVendas}</span>
-                            </div>
+                    
+                    <div>
+                        <h4 style="margin: 0 0 15px 0; color: #555;">Informações do Sistema</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div><strong>Cadastrado por:</strong> ${escapeHtml(usuarioCadastro)}</div>
+                            <div><strong>Criado em:</strong> ${cliente.criadoEm ? formatarDataHora(cliente.criadoEm) : 'Não informado'}</div>
+                            <div><strong>Atualizado em:</strong> ${cliente.atualizadoEm ? formatarDataHora(cliente.atualizadoEm) : 'Não informado'}</div>
+                            <div><strong>Total de Vendas:</strong> ${totalVendas}</div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #eee; padding-top: 20px;">
-                    <button onclick="editarCliente(${cliente.id})" class="btn btn-primary">
-                        <i class="fas fa-edit"></i> Editar Cliente
+                <div style="margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #eee; padding-top: 20px;">
+                    <button onclick="editarCliente(${cliente.id})" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                        <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-secondary">Fechar</button>
+                    <button onclick="this.closest('.modal-overlay').remove()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">Fechar</button>
                 </div>
             </div>
         </div>
@@ -727,7 +598,8 @@ function mostrarModalDetalhes(cliente) {
 
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
-// ========== MODAL DE EDIÇÃO DO CLIENTE ==========
+
+// ========== FUNÇÕES DE EDIÇÃO (mantidas do segundo código) ==========
 async function editarCliente(clienteId) {
     try {
         const token = localStorage.getItem('token');
@@ -753,7 +625,6 @@ async function editarCliente(clienteId) {
 }
 
 function mostrarModalEdicao(cliente) {
-    // CORREÇÃO: Converter data para o formato correto (dd-mm-aaaa)
     const dataExibicao = cliente.dataNascimento ? converterDataParaInput(cliente.dataNascimento) : '';
 
     const modalHTML = `
@@ -949,7 +820,6 @@ async function handleSubmitEdicao(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     submitBtn.disabled = true;
 
-    // Limpar mensagens anteriores
     const errorMsg = document.getElementById('errorMsg');
     const successMsg = document.getElementById('successMsg');
     if (errorMsg) errorMsg.style.display = 'none';
@@ -962,11 +832,10 @@ async function handleSubmitEdicao(e) {
     } catch (error) {
         console.error('❌ Erro no handleSubmitEdicao:', error);
         
-        // Mostrar erro mais detalhado no modal
         if (errorMsg) {
             errorMsg.innerHTML = `
                 <strong>Erro ao salvar:</strong> ${error.message}
-                <br><small>Verifique os dados e tente novamente. Se o problema persistir, contate o suporte.</small>
+                <br><small>Verifique os dados e tente novamente.</small>
             `;
             errorMsg.style.display = 'block';
         }
@@ -978,83 +847,12 @@ async function handleSubmitEdicao(e) {
     }
 }
 
-// ========== FUNÇÃO ATUALIZADA PARA OBTER DADOS DO FORMULÁRIO ==========
 function obterDadosFormularioEdicao() {
     const clienteId = document.getElementById('clienteId').value;
     const dataNascimentoInput = document.getElementById('edit-dataNascimento').value.trim();
 
-    // CORREÇÃO: Formatar data para o padrão ISO (YYYY-MM-DD) que o backend espera
     let dataNascimentoFormatada = null;
     if (dataNascimentoInput) {
-        try {
-            // Converter de dd-mm-aaaa para aaaa-mm-dd
-            const partes = dataNascimentoInput.split('-');
-            if (partes.length === 3) {
-                const dia = partes[0].padStart(2, '0');
-                const mes = partes[1].padStart(2, '0');
-                const ano = partes[2];
-                
-                // Validar se é uma data válida
-                const data = new Date(`${ano}-${mes}-${dia}`);
-                if (!isNaN(data.getTime())) {
-                    dataNascimentoFormatada = `${ano}-${mes}-${dia}`;
-                } else {
-                    console.warn('Data de nascimento inválida:', dataNascimentoInput);
-                    dataNascimentoFormatada = null;
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao formatar data de nascimento:', error);
-            dataNascimentoFormatada = null;
-        }
-    }
-
-    const dados = {
-        nome: document.getElementById('edit-nome').value.trim(),
-        email: document.getElementById('edit-email').value.trim(),
-        telefone: document.getElementById('edit-telefone').value.replace(/\D/g, ''),
-        cpf: document.getElementById('edit-cpf').value.replace(/\D/g, '') || null,
-        cnpj: document.getElementById('edit-cnpj').value.replace(/\D/g, '') || null,
-        dataNascimento: dataNascimentoFormatada,
-        cep: document.getElementById('edit-cep').value.replace(/\D/g, '') || null,
-        rua: document.getElementById('edit-rua').value.trim() || null,
-        numero: document.getElementById('edit-numero').value.trim() || null,
-        complemento: document.getElementById('edit-complemento').value.trim() || null,
-        bairro: document.getElementById('edit-bairro').value.trim() || null,
-        cidade: document.getElementById('edit-cidade').value.trim() || null,
-        estado: document.getElementById('edit-estado').value.trim() || null,
-        observacoes: document.getElementById('edit-observacoes').value.trim() || null
-    };
-
-    // CORREÇÃO: Validar campos obrigatórios
-    if (!dados.nome) {
-        throw new Error('Nome é obrigatório');
-    }
-    
-    if (!dados.email) {
-        throw new Error('Email é obrigatório');
-    }
-    
-    if (!dados.telefone) {
-        throw new Error('Telefone é obrigatório');
-    }
-
-    console.log('📤 Dados do formulário:');
-    console.log('🆔 Cliente ID:', clienteId);
-    console.log('📝 Dados:', dados);
-    console.log('📅 Data Nascimento formatada (ISO):', dados.dataNascimento);
-
-    return { clienteId, dados };
-}
-
-function obterDadosFormularioEdicao() {
-    const clienteId = document.getElementById('clienteId').value;
-    const dataNascimentoInput = document.getElementById('edit-dataNascimento').value.trim();
-
-    // CORREÇÃO: Garantir que a data esteja no formato dd-mm-aaaa
-    let dataNascimentoFormatada = null;
-    if (dataNascimentoInput) {
-        // Remover qualquer caractere não numérico e garantir formato dd-mm-aaaa
         const numeros = dataNascimentoInput.replace(/\D/g, '');
         if (numeros.length === 8) {
             const dia = numeros.substring(0, 2);
@@ -1062,7 +860,6 @@ function obterDadosFormularioEdicao() {
             const ano = numeros.substring(4, 8);
             dataNascimentoFormatada = `${dia}-${mes}-${ano}`;
         } else {
-            // Se não tem 8 dígitos, usar como está (o backend vai validar)
             dataNascimentoFormatada = dataNascimentoInput;
         }
     }
@@ -1084,46 +881,52 @@ function obterDadosFormularioEdicao() {
         observacoes: document.getElementById('edit-observacoes').value.trim() || null
     };
 
-    console.log('📤 Dados do formulário:');
-    console.log('🆔 Cliente ID:', clienteId);
-    console.log('📝 Dados:', dados);
-    console.log('📅 Data Nascimento formatada:', dados.dataNascimento);
+    if (!dados.nome) throw new Error('Nome é obrigatório');
+    if (!dados.email) throw new Error('Email é obrigatório');
+    if (!dados.telefone) throw new Error('Telefone é obrigatório');
 
     return { clienteId, dados };
 }
 
+// ========== FUNÇÃO ATUALIZADA COM MELHOR TRATAMENTO DE ERROS ==========
 async function atualizarCliente({ clienteId, dados }) {
     try {
         console.log('🚀 Enviando atualização para cliente ID:', clienteId);
+        console.log('📦 Dados enviados:', dados);
         
         const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Token de autenticação não encontrado. Faça login novamente.');
+        }
+
         const response = await fetch(`${API_CONFIG.CLIENTES}/${clienteId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(dados)
-        });
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+         body: JSON.stringify(dados)
+});
 
         console.log('📨 Status da resposta:', response.status);
+        console.log('📨 Status OK?', response.ok);
 
-        // Ler a resposta UMA VEZ apenas
+        // Tentar obter a resposta como texto primeiro
         const responseText = await response.text();
-        console.log('📄 Conteúdo da resposta:', responseText.substring(0, 500)); // Mostrar só os primeiros 500 chars
+        console.log('📄 Conteúdo da resposta:', responseText);
 
-        // Tentar parsear como JSON se possível
         let result;
         try {
             result = JSON.parse(responseText);
-        } catch {
+        } catch (e) {
             // Se não for JSON, usar o texto puro
             result = { text: responseText };
         }
 
         if (response.ok) {
             console.log('✅ Cliente atualizado com sucesso');
-            // CORREÇÃO: Usar showNotification em vez de mostrarSucessoModal
+            console.log('📊 Resultado:', result);
             showNotification('Cliente atualizado com sucesso!', 'success');
             
             setTimeout(() => {
@@ -1132,28 +935,168 @@ async function atualizarCliente({ clienteId, dados }) {
             }, 1500);
         } else {
             console.error('❌ Erro na resposta:', result);
+            console.error('❌ Status:', response.status);
+            console.error('❌ Status Text:', response.statusText);
             
             let errorMessage = 'Erro ao atualizar cliente';
             
-            // Extrair mensagem de erro de várias formas possíveis
-            if (result.erro) errorMessage = result.erro;
-            else if (result.message) errorMessage = result.message;
-            else if (result.error) errorMessage = result.error;
-            else if (result.detalhes) errorMessage = result.detalhes;
-            else if (result.text) {
-                // Se for HTML, mostrar mensagem genérica
-                if (result.text.includes('<!DOCTYPE')) {
-                    errorMessage = `Erro ${response.status} no servidor - Contate o suporte técnico`;
+            // Tentar extrair a mensagem de erro da resposta de várias formas
+            if (result && typeof result === 'object') {
+                if (result.erro) errorMessage = result.erro;
+                else if (result.message) errorMessage = result.message;
+                else if (result.error) errorMessage = result.error;
+                else if (result.detalhes) errorMessage = result.detalhes;
+                else if (result.mensagem) errorMessage = result.mensagem;
+                else if (result.text) {
+                    // Se for HTML, mostrar mensagem genérica
+                    if (result.text.includes('<!DOCTYPE')) {
+                        errorMessage = `Erro ${response.status} no servidor. Contate o suporte técnico.`;
+                    } else {
+                        errorMessage = result.text.substring(0, 200);
+                    }
                 } else {
-                    errorMessage = result.text.substring(0, 200);
+                    // Tentar stringify se for objeto
+                    errorMessage = JSON.stringify(result);
                 }
+            } else if (responseText) {
+                errorMessage = responseText.substring(0, 200);
+            }
+            
+            // Adicionar status HTTP à mensagem
+            if (response.status) {
+                errorMessage = `Erro ${response.status}: ${errorMessage}`;
             }
             
             throw new Error(errorMessage);
         }
     } catch (error) {
         console.error('❌ Erro na atualização:', error);
+        console.error('❌ Stack:', error.stack);
         throw error;
+    }
+}
+
+// ========== FUNÇÃO ATUALIZADA PARA OBTER DADOS DO FORMULÁRIO ==========
+function obterDadosFormularioEdicao() {
+    const clienteId = document.getElementById('clienteId').value;
+    const dataNascimentoInput = document.getElementById('edit-dataNascimento').value.trim();
+
+    // FORMATO CORRETO PARA A API: dd-mm-aaaa
+    let dataNascimentoFormatada = null;
+    if (dataNascimentoInput) {
+        // Limpar caracteres não numéricos
+        const numeros = dataNascimentoInput.replace(/\D/g, '');
+        
+        if (numeros.length === 8) {
+            // Formatar como dd-mm-aaaa
+            const dia = numeros.substring(0, 2);
+            const mes = numeros.substring(2, 4);
+            const ano = numeros.substring(4, 8);
+            dataNascimentoFormatada = `${dia}-${mes}-${ano}`;
+            
+            // Validar data
+            const data = new Date(`${ano}-${mes}-${dia}`);
+            if (isNaN(data.getTime())) {
+                console.warn('⚠️ Data de nascimento inválida:', dataNascimentoInput);
+                dataNascimentoFormatada = null;
+            }
+        } else if (dataNascimentoInput.includes('-') && dataNascimentoInput.length === 10) {
+            // Já está no formato dd-mm-aaaa
+            dataNascimentoFormatada = dataNascimentoInput;
+        } else {
+            console.warn('⚠️ Formato de data inválido:', dataNascimentoInput);
+        }
+    }
+
+    // Validar campos obrigatórios ANTES de construir o objeto
+    const nome = document.getElementById('edit-nome').value.trim();
+    const email = document.getElementById('edit-email').value.trim();
+    const telefone = document.getElementById('edit-telefone').value.trim();
+
+    if (!nome) throw new Error('Nome é obrigatório');
+    if (!email) throw new Error('Email é obrigatório');
+    if (!telefone) throw new Error('Telefone é obrigatório');
+
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        throw new Error('Email inválido');
+    }
+
+    const dados = {
+        nome: nome,
+        email: email,
+        telefone: telefone.replace(/\D/g, ''), // Apenas números
+        cpf: document.getElementById('edit-cpf').value.replace(/\D/g, '') || null,
+        cnpj: document.getElementById('edit-cnpj').value.replace(/\D/g, '') || null,
+        dataNascimento: dataNascimentoFormatada,
+        cep: document.getElementById('edit-cep').value.replace(/\D/g, '') || null,
+        rua: document.getElementById('edit-rua').value.trim() || null,
+        numero: document.getElementById('edit-numero').value.trim() || null,
+        complemento: document.getElementById('edit-complemento').value.trim() || null,
+        bairro: document.getElementById('edit-bairro').value.trim() || null,
+        cidade: document.getElementById('edit-cidade').value.trim() || null,
+        estado: document.getElementById('edit-estado').value.trim() || null,
+        observacoes: document.getElementById('edit-observacoes').value.trim() || null
+    };
+
+    console.log('📤 Dados do formulário preparados para envio:');
+    console.log('🆔 Cliente ID:', clienteId);
+    console.log('📝 Dados:', dados);
+    console.log('📅 Data Nascimento (formato enviado):', dados.dataNascimento);
+
+    return { clienteId, dados };
+}
+
+// ========== ATUALIZAR FUNÇÃO handleSubmitEdicao PARA MOSTRAR MELHOR OS ERROS ==========
+async function handleSubmitEdicao(e) {
+    e.preventDefault();
+    
+    const form = document.getElementById('cliente-edit-form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    submitBtn.disabled = true;
+
+    const errorMsg = document.getElementById('errorMsg');
+    const successMsg = document.getElementById('successMsg');
+    if (errorMsg) errorMsg.style.display = 'none';
+    if (successMsg) successMsg.style.display = 'none';
+
+    try {
+        const formData = obterDadosFormularioEdicao();
+        console.log('📋 Dados validados, enviando para API...');
+        await atualizarCliente(formData);
+        
+    } catch (error) {
+        console.error('❌ Erro no handleSubmitEdicao:', error);
+        
+        // Mostrar erro no modal
+        if (errorMsg) {
+            errorMsg.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <i class="fas fa-exclamation-triangle" style="color: #dc3545; font-size: 1.2rem;"></i>
+                    <div>
+                        <strong>Erro ao salvar alterações:</strong><br>
+                        ${error.message}
+                        <br><small style="color: #666; margin-top: 5px; display: block;">
+                            Verifique os dados e tente novamente. Se o problema persistir, contate o suporte.
+                        </small>
+                    </div>
+                </div>
+            `;
+            errorMsg.style.display = 'block';
+            
+            // Scroll para o erro
+            errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Também mostrar notificação
+        showNotification('Erro ao salvar: ' + error.message, 'error');
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
 }
 
@@ -1193,10 +1136,8 @@ async function executarExclusao(clienteId) {
 
         if (response.ok) {
             showNotification('Cliente excluído com sucesso!', 'success');
-            // Fechar modal
             const modals = document.querySelectorAll('.modal-overlay');
             modals.forEach(modal => modal.remove());
-            // Recarregar dados
             await loadClientesData();
         } else {
             const result = await response.json();
@@ -1247,7 +1188,6 @@ function confirmarExclusaoCliente(clienteId, clienteNome) {
         }
     });
 
-    // Armazenar o ID do cliente para exclusão
     window.clienteParaExcluir = clienteId;
 }
 
@@ -1298,14 +1238,11 @@ async function excluirClienteModal() {
     }
 }
 
-// ========== FUNÇÕES AUXILIARES CORRIGIDAS ==========
-
-// CORREÇÃO: Função para converter data para o formato de input (dd-mm-aaaa)
+// ========== FUNÇÕES AUXILIARES ==========
 function converterDataParaInput(dataString) {
     if (!dataString) return '';
     
     try {
-        // Se já está no formato dd-mm-aaaa, retornar como está
         if (typeof dataString === 'string' && dataString.includes('-')) {
             const partes = dataString.split('-');
             if (partes.length === 3 && partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4) {
@@ -1313,7 +1250,6 @@ function converterDataParaInput(dataString) {
             }
         }
         
-        // Tentar converter de outros formatos
         const data = new Date(dataString);
         if (!isNaN(data.getTime())) {
             const dia = data.getDate().toString().padStart(2, '0');
@@ -1329,12 +1265,10 @@ function converterDataParaInput(dataString) {
     }
 }
 
-// CORREÇÃO: Função para formatar data para exibição (dd-mm-aaaa)
 function formatarDataParaExibicao(dataString) {
     if (!dataString) return '-';
     
     try {
-        // Se já está no formato dd-mm-aaaa, retornar como está
         if (typeof dataString === 'string' && dataString.includes('-')) {
             const partes = dataString.split('-');
             if (partes.length === 3 && partes[0].length === 2 && partes[1].length === 2 && partes[2].length === 4) {
@@ -1342,7 +1276,6 @@ function formatarDataParaExibicao(dataString) {
             }
         }
         
-        // Tentar converter de outros formatos
         const data = new Date(dataString);
         if (!isNaN(data.getTime())) {
             const dia = data.getDate().toString().padStart(2, '0');
@@ -1374,13 +1307,11 @@ function formatarDataHora(dataString) {
 function parseDate(dataString) {
     if (!dataString) return new Date();
     
-    // Tenta parse como ISO string
     let data = new Date(dataString);
     if (!isNaN(data.getTime())) {
         return data;
     }
 
-    // Tenta parse como DD/MM/YYYY
     const partes = dataString.split('/');
     if (partes.length === 3) {
         data = new Date(partes[2], partes[1] - 1, partes[0]);
@@ -1389,7 +1320,6 @@ function parseDate(dataString) {
         }
     }
 
-    // Tenta parse como DD-MM-YYYY
     const partes2 = dataString.split('-');
     if (partes2.length === 3) {
         data = new Date(partes2[2], partes2[1] - 1, partes2[0]);
@@ -1401,7 +1331,6 @@ function parseDate(dataString) {
     return new Date();
 }
 
-// ========== FUNÇÕES DE FORMATAÇÃO ==========
 function formatarCPF(cpf) {
     if (!cpf) return '';
     const numeros = cpf.replace(/\D/g, '');
@@ -1481,8 +1410,8 @@ function showLoadingState() {
         elements.clientsTableBody.innerHTML = `
             <tr>
                 <td colspan="7" style="text-align: center; padding: 40px;">
-                    <div class="loading-spinner"></div>
-                    <p style="margin-top: 1rem; color: var(--text-secondary);">Carregando clientes...</p>
+                    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                    <p style="margin-top: 1rem; color: #666;">Carregando clientes...</p>
                 </td>
             </tr>
         `;
@@ -1490,42 +1419,39 @@ function showLoadingState() {
     if (elements.cardsViewContainer) {
         elements.cardsViewContainer.innerHTML = `
             <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
-                <div class="loading-spinner"></div>
-                <p style="margin-top: 1rem; color: var(--text-secondary);">Carregando clientes...</p>
+                <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                <p style="margin-top: 1rem; color: #666;">Carregando clientes...</p>
             </div>
         `;
     }
 }
 
 function hideLoadingState() {
-    // Loading state é removido quando os dados são renderizados
+    // A renderização remove o loading state
 }
 
 function showNotification(message, type = 'info') {
-    // Remove notificações existentes
-    const existingNotifications = document.querySelectorAll('.notification');
-    existingNotifications.forEach(notification => notification.remove());
+    const existing = document.querySelectorAll('.notification');
+    existing.forEach(el => el.remove());
 
     const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: white;
+        background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
+        color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
         padding: 15px 20px;
         border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        border-left: 4px solid ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 1000;
         max-width: 400px;
         animation: slideInRight 0.3s ease;
     `;
     
     notification.innerHTML = `
-        <div class="notification-content" style="display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}" 
-               style="color: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};"></i>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
             <span>${message}</span>
         </div>
     `;
@@ -1552,6 +1478,21 @@ function updateLastAccess() {
         });
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ========== SISTEMA DE EXPORTAÇÃO PARA CLIENTES ==========
 
@@ -1869,3 +1810,13 @@ window.confirmarExclusaoCliente = confirmarExclusaoCliente;
 window.showExportOptions = showExportOptions;
 window.exportarClientesParaExcel = exportarClientesParaExcel;
 window.exportarClientesParaPDF = exportarClientesParaPDF;
+
+
+window.changePage = changePage;
+window.mostrarDetalhesCliente = mostrarDetalhesCliente;
+window.editarCliente = editarCliente;
+window.confirmarExclusao = confirmarExclusao;
+window.confirmarExclusaoCliente = confirmarExclusaoCliente;
+window.fecharModalConfirmacao = fecharModalConfirmacao;
+window.excluirClienteModal = excluirClienteModal;
+window.fecharModalEdicao = fecharModalEdicao;

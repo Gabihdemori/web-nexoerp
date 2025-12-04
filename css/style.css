@@ -103,6 +103,19 @@ body {
     position: relative;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Sidebar */
 .sidebar {
     width: var(--sidebar-width);
@@ -111,7 +124,7 @@ body {
     display: flex;
     flex-direction: column;
     position: fixed;
-    height: 100vh;
+    height: 10000vh;
     z-index: 100;
     box-shadow: var(--box-shadow);
     overflow-y: auto;
@@ -127,7 +140,6 @@ body {
     justify-content: space-between;
     padding: 20px;
     border-bottom: 1px solid var(--border-color);
-    min-height: var(--header-height);
     position: sticky;
     top: 0;
     background: var(--bg-primary);
@@ -315,6 +327,29 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Conteúdo Principal */
 .main-content {
@@ -596,6 +631,36 @@ body {
     font-size: 0.8rem;
     color: var(--text-secondary);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Menu do Usuário */
 .user-menu {

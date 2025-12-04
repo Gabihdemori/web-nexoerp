@@ -1,4 +1,3 @@
-// produtos.js - VERSÃO COMPLETA COM MODAIS DE DETALHES E EDIÇÃO
 
 const API_CONFIG = {
     PRODUTOS: "https://api-nexoerp.vercel.app/api/produtos"
@@ -132,31 +131,47 @@ async function loadProdutosData() {
         showLoadingState();
         
         const queryParams = new URLSearchParams();
+        
+        // Adicionar filtro de tipo (converte para o valor esperado pelo backend)
+        console.log('Filtro de tipo atual:', appState.filters.tipo);
         if (appState.filters.tipo && appState.filters.tipo !== 'all') {
-            queryParams.append('tipo', appState.filters.tipo === 'product' ? 'Produto' : 'Servico');
+            const tipoMap = {
+                'product': 'Produto',
+                'service': 'Servico'
+            };
+            const tipoValue = tipoMap[appState.filters.tipo];
+            console.log('Convertendo tipo para:', tipoValue);
+            queryParams.append('tipo', tipoValue);
         }
-        if (appState.filters.status) queryParams.append('status', appState.filters.status);
-        if (appState.currentPage) queryParams.append('page', appState.currentPage);
-        if (appState.itemsPerPage) queryParams.append('limit', appState.itemsPerPage);
-
+        
+        // Adicionar filtro de status
+        if (appState.filters.status && appState.filters.status !== 'all') {
+            queryParams.append('status', appState.filters.status);
+        }
+        
+        // Adicionar termo de busca
+        if (appState.searchTerm) {
+            queryParams.append('search', appState.searchTerm);
+        }
+        
+        // Adicionar paginação
+        queryParams.append('page', appState.currentPage);
+        queryParams.append('limit', appState.itemsPerPage);
+        
         const url = `${API_CONFIG.PRODUTOS}?${queryParams}`;
+        console.log('🔍 URL da requisição:', url);
+        
         const produtosData = await fetchData(url);
         
+        // Armazenar os produtos recebidos
         appState.produtos = produtosData.produtos || [];
+        console.log('Produtos recebidos:', appState.produtos);
         appState.paginacao = produtosData.paginacao || {};
-        
-        // Aplicar busca client-side
-        if (appState.searchTerm) {
-            const searchTerm = appState.searchTerm.toLowerCase();
-            appState.produtos = appState.produtos.filter(produto => 
-                produto.nome.toLowerCase().includes(searchTerm) ||
-                (produto.descricao && produto.descricao.toLowerCase().includes(searchTerm))
-            );
-        }
         
         calculateMetrics(appState.produtos);
         renderProdutos();
         renderMetrics();
+        renderPagination();
         
     } catch (error) {
         console.error('Erro ao carregar produtos:', error);
@@ -183,6 +198,7 @@ function renderMetrics() {
 function handleFilterChange(e) {
     const filterName = e.target.id.replace('Filter', '');
     appState.filters[filterName] = e.target.value;
+    console.log(`Filtro ${filterName} alterado para:`, e.target.value);
     appState.currentPage = 1;
     loadProdutosData();
 }
@@ -200,23 +216,28 @@ function handleItemsPerPageChange(e) {
 }
 
 function renderProdutos() {
-    const filteredProdutos = filterProdutos(appState.produtos);
-    const paginatedProdutos = paginateProdutos(filteredProdutos);
-    
-    if (appState.currentView === 'table') {
-        renderTableView(paginatedProdutos, filteredProdutos.length);
-    } else {
-        renderCardsView(paginatedProdutos, filteredProdutos.length);
+    // Primeiro, aplicar filtro de estoque (client-side) se necessário
+    let produtosExibicao = [...appState.produtos];
+    if (appState.filters.stock && appState.filters.stock !== 'all') {
+        produtosExibicao = filterProdutos(produtosExibicao);
     }
     
-    renderPagination(filteredProdutos.length);
+    const paginatedProdutos = paginateProdutos(produtosExibicao);
+    
+    if (appState.currentView === 'table') {
+        renderTableView(paginatedProdutos, produtosExibicao.length);
+    } else {
+        renderCardsView(paginatedProdutos, produtosExibicao.length);
+    }
+    
+    renderPagination(produtosExibicao.length);
 }
 
 function filterProdutos(produtos) {
     return produtos.filter(produto => {
         // Filtro de estoque client-side
         if (appState.filters.stock === 'out') {
-            return produto.estoque === 0;
+            return produto.estoque === 0 || produto.estoque === null;
         } else if (appState.filters.stock === 'available') {
             return produto.estoque > 0;
         } else if (appState.filters.stock === 'low') {
@@ -228,7 +249,8 @@ function filterProdutos(produtos) {
 
 function paginateProdutos(produtos) {
     const startIndex = (appState.currentPage - 1) * appState.itemsPerPage;
-    return produtos.slice(startIndex, startIndex + appState.itemsPerPage);
+    const endIndex = startIndex + appState.itemsPerPage;
+    return produtos.slice(startIndex, endIndex);
 }
 
 function renderTableView(produtos, totalProdutos) {
@@ -912,26 +934,28 @@ function escapeHtml(unsafe) {
         .replace(/'/g, "&#039;");
 }
 
-async function fetchData(url, options = {}) {
-    const defaultOptions = {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    };
-
-    const finalOptions = { ...defaultOptions, ...options };
-    
+async function fetchData(url) {
     try {
-        const response = await fetch(url, finalOptions);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erro ${response.status}: ${errorText}`);
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            throw new Error('Não autenticado');
         }
-
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        }
+        
         return await response.json();
     } catch (error) {
-        console.error('Erro na requisição:', error);
+        console.error('Erro no fetchData:', error);
         throw error;
     }
 }

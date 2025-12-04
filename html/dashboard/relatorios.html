@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="imagens/favicon.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏢</text></svg>">
+    <link rel="icon" href="data:image/svg+xml<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏢</text></svg>">
 </head>
 <body>
     <div class="container">
@@ -129,188 +129,218 @@
             </header>
 
             <!-- Content -->
-            <main class="content" role="main">
+             <main class="content" role="main">
                 <div class="page-header">
-                    <h1>Relatórios Avançados</h1>
-                    <p class="page-subtitle">Analise e exporte dados do seu negócio</p>
+                    <h1><i class="fas fa-chart-bar"></i> Relatórios</h1>
+                    <p class="page-subtitle">Análise de dados e relatórios do sistema</p>
                     <div class="header-actions">
-                        <button id="save-template" class="btn btn-secondary">
-                            <i class="fas fa-save"></i> Salvar Template
+                        <button id="exportExcel" class="btn btn-secondary">
+                            <i class="fas fa-file-excel"></i> Excel
                         </button>
-                        <button id="export-pdf" class="btn btn-primary">
-                            <i class="fas fa-file-pdf"></i> Exportar PDF
+                        <button id="exportPDF" class="btn btn-primary">
+                            <i class="fas fa-file-pdf"></i> PDF
                         </button>
                     </div>
                 </div>
 
-                <div class="reports-container">
-                    <div class="reports-sidebar">
-                        <div class="report-categories">
-                            <h3>Categorias</h3>
-                            <ul class="category-list">
-                                <li class="category-item active" data-category="vendas">
-                                    <i class="fas fa-shopping-cart"></i>
-                                    <span>Vendas</span>
-                                </li>
-                                <li class="category-item" data-category="estoque">
-                                    <i class="fas fa-boxes"></i>
-                                    <span>Estoque</span>
-                                </li>
-                                <li class="category-item" data-category="financeiro">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                    <span>Financeiro</span>
-                                </li>
-                                <li class="category-item" data-category="clientes">
-                                    <i class="fas fa-users"></i>
-                                    <span>Clientes</span>
-                                </li>
-                            </ul>
+                <!-- Filtros Rápidos -->
+                <div class="filters-card">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="reportType"><i class="fas fa-chart-line"></i> Tipo de Relatório</label>
+                            <select id="reportType" class="form-select">
+                                <option value="">Selecione um relatório</option>
+                                <option value="clientes-top">Clientes que mais compram</option>
+                                <option value="produtos-top">Produtos mais vendidos</option>
+                                <option value="vendas-periodo">Vendas por período</option>
+                                <option value="produtos-estoque">Estoque de produtos</option>
+                                <option value="clientes-ativos">Clientes ativos</option>
+                                <option value="vendas-vendedor">Vendas por vendedor</option>
+                            </select>
                         </div>
 
-                        <div class="report-options">
-                            <h3>Opções</h3>
-                            <form id="report-filters" class="report-form">
-                                <div class="form-group">
-                                    <label for="report-type">Tipo de Relatório</label>
-                                    <select id="report-type" class="form-select">
-                                        <option value="">Selecione um relatório</option>
-                                        <option value="vendas-por-periodo">Vendas por Período</option>
-                                        <option value="produtos-mais-vendidos">Produtos Mais Vendidos</option>
-                                        <option value="vendas-por-vendedor">Vendas por Vendedor</option>
-                                        <option value="clientes-ativos">Clientes Ativos</option>
-                                    </select>
-                                </div>
+                        <div class="filter-group">
+                            <label for="datePeriod"><i class="fas fa-calendar-alt"></i> Período</label>
+                            <select id="datePeriod" class="form-select">
+                                <option value="today">Hoje</option>
+                                <option value="week">Esta semana</option>
+                                <option value="month" selected>Este mês</option>
+                                <option value="quarter">Este trimestre</option>
+                                <option value="year">Este ano</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                        </div>
 
-                                <div class="form-group">
-                                    <label>Período</label>
-                                    <div class="date-range">
-                                        <input type="text" id="start-date" class="datepicker form-input" placeholder="Data Início">
-                                        <span>até</span>
-                                        <input type="text" id="end-date" class="datepicker form-input" placeholder="Data Fim">
-                                    </div>
-                                </div>
+                        <div class="filter-group date-custom" style="display: none;">
+                            <label><i class="fas fa-calendar-day"></i> Datas</label>
+                            <div class="date-inputs">
+                                <input type="date" id="startDate" class="form-input">
+                                <span>até</span>
+                                <input type="date" id="endDate" class="form-input">
+                            </div>
+                        </div>
 
-                                <div class="form-group">
-                                    <label for="group-by">Agrupar por</label>
-                                    <select id="group-by" class="form-select">
-                                        <option value="">Nenhum</option>
-                                        <option value="dia">Dia</option>
-                                        <option value="semana">Semana</option>
-                                        <option value="mes">Mês</option>
-                                        <option value="vendedor">Vendedor</option>
-                                        <option value="cliente">Cliente</option>
-                                    </select>
-                                </div>
+                        <div class="filter-group">
+                            <label for="limitResults"><i class="fas fa-sort-amount-down"></i> Top</label>
+                            <select id="limitResults" class="form-select">
+                                <option value="5">Top 5</option>
+                                <option value="10" selected>Top 10</option>
+                                <option value="20">Top 20</option>
+                                <option value="50">Top 50</option>
+                            </select>
+                        </div>
 
-                                <div class="form-group">
-                                    <label for="filter-by">Filtrar por</label>
-                                    <select id="filter-by" class="form-select">
-                                        <option value="">Nenhum</option>
-                                        <option value="vendedor">Vendedor</option>
-                                        <option value="cliente">Cliente</option>
-                                        <option value="produto">Produto</option>
-                                        <option value="status">Status</option>
-                                    </select>
-                                </div>
-
-                                <div id="dynamic-filters">
-                                    <!-- Filtros dinâmicos serão inseridos aqui -->
-                                </div>
-
-                                <button type="submit" class="btn btn-primary btn-full">
-                                    <i class="fas fa-sync-alt"></i> Gerar Relatório
-                                </button>
-                            </form>
+                        <div class="filter-actions">
+                            <button id="generateReport" class="btn btn-primary">
+                                <i class="fas fa-sync-alt"></i> Gerar Relatório
+                            </button>
+                            <button id="resetFilters" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Limpar
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    <div class="reports-content">
-                        <div class="report-toolbar">
-                            <div class="view-options">
-                                <button class="btn-view active" data-view="table">
-                                    <i class="fas fa-table"></i> Tabela
-                                </button>
-                                <button class="btn-view" data-view="chart">
-                                    <i class="fas fa-chart-bar"></i> Gráfico
-                                </button>
-                                <button class="btn-view" data-view="both">
-                                    <i class="fas fa-columns"></i> Ambos
-                                </button>
-                            </div>
-                            <div class="chart-type">
-                                <select id="chart-type-select" class="form-select">
-                                    <option value="bar">Barras</option>
-                                    <option value="line">Linhas</option>
-                                    <option value="pie">Pizza</option>
-                                    <option value="donut">Rosca</option>
+                <!-- Métricas Rápidas -->
+                <div class="quick-metrics">
+                    <div class="metric-card">
+                        <div class="metric-icon bg-primary">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Total Clientes</h3>
+                            <div class="metric-value" id="totalClients">0</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon bg-success">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Produtos Ativos</h3>
+                            <div class="metric-value" id="totalProducts">0</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon bg-info">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Vendas Hoje</h3>
+                            <div class="metric-value" id="salesToday">0</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon bg-warning">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Valor Total</h3>
+                            <div class="metric-value" id="totalValue">R$ 0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Área de Gráficos -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-chart-pie"></i> Gráfico Principal</h3>
+                            <div class="chart-actions">
+                                <select id="chartType" class="form-select small">
+                                    <option value="ColumnChart">Barras</option>
+                                    <option value="PieChart">Pizza</option>
+                                    <option value="LineChart">Linhas</option>
+                                    <option value="BarChart">Barras Horizontais</option>
+                                    <option value="AreaChart">Área</option>
                                 </select>
                             </div>
                         </div>
+                        <div id="mainChart" class="chart-box"></div>
+                    </div>
 
-                        <div class="report-results">
-                            <div class="loading-indicator">
-                                <div class="spinner"></div>
-                                <p>Gerando relatório...</p>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3><i class="fas fa-list-ol"></i> Dados Detalhados</h3>
+                            <div class="chart-actions">
+                                <button id="exportData" class="btn-action" title="Exportar dados">
+                                    <i class="fas fa-download"></i>
+                                </button>
                             </div>
+                        </div>
+                        <div class="table-container">
+                            <div class="table-wrapper">
+                                <table class="data-table" id="reportTable">
+                                    <thead>
+                                        <tr id="tableHeader">
+                                            <!-- Cabeçalho dinâmico -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody">
+                                        <!-- Dados dinâmicos -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <div class="report-summary">
-                                <div class="summary-cards">
-                                    <!-- Sumários serão carregados dinamicamente -->
-                                </div>
-                            </div>
+                <!-- Relatórios de Lista (para exportação) -->
+                <div class="list-reports">
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3><i class="fas fa-box"></i> Lista de Produtos</h3>
+                            <button class="btn-export" data-type="products">
+                                <i class="fas fa-file-excel"></i> Exportar
+                            </button>
+                        </div>
+                        <div class="report-preview">
+                            <p>Exporte a lista completa de produtos com estoque e preços</p>
+                        </div>
+                    </div>
 
-                            <div class="table-container">
-                                <div class="table-wrapper">
-                                    <table class="data-table" id="report-table">
-                                        <thead>
-                                            <tr>
-                                                <!-- Cabeçalho será carregado dinamicamente -->
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <!-- Dados serão carregados dinamicamente -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3><i class="fas fa-users"></i> Lista de Clientes</h3>
+                            <button class="btn-export" data-type="clients">
+                                <i class="fas fa-file-excel"></i> Exportar
+                            </button>
+                        </div>
+                        <div class="report-preview">
+                            <p>Exporte todos os clientes cadastrados no sistema</p>
+                        </div>
+                    </div>
 
-                            <div class="chart-container">
-                                <canvas id="report-chart"></canvas>
-                            </div>
-
-                            <div class="no-results">
-                                <i class="fas fa-chart-bar"></i>
-                                <p>Selecione as opções e gere um relatório</p>
-                            </div>
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3><i class="fas fa-shopping-cart"></i> Lista de Vendas</h3>
+                            <button class="btn-export" data-type="sales">
+                                <i class="fas fa-file-excel"></i> Exportar
+                            </button>
+                        </div>
+                        <div class="report-preview">
+                            <p>Exporte o histórico completo de vendas</p>
                         </div>
                     </div>
                 </div>
             </main>
 
             <!-- Footer -->
-            <footer class="footer" role="contentinfo">
+            <footer class="footer">
                 <div class="footer-content">
-                    <div class="footer-info">
-                        <p>NexoERP © 2025 - Versão 1.6</p>
-                        <p>Sistema desenvolvido para pequenas e médias empresas</p>
-                    </div>
-                    <div class="footer-links">
-                        <a href="politica-privacidade.html">Política de Privacidade</a>
-                        <a href="termos-uso.html">Termos de Uso</a>
-                        <a href="suporte.html">Suporte</a>
-                    </div>
+                    <p>NexoERP © 2025 - Sistema de Gestão Empresarial</p>
                 </div>
             </footer>
         </div>
     </div>
 
-    <!-- Bibliotecas externas -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  
-    
+
+    <script src="js/relatorios.js"></script>
   <script src="js/funcoesui.js"></script>
 
 </body>

@@ -131,85 +131,96 @@
 
 
         <!-- Conteúdo Principal -->
-        <main class="main-content">
-            <div class="form-card">
-                <form id="sale-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="cliente">Cliente *</label>
-                            <select id="cliente" name="cliente" required>
-                                <option value="">Selecione um cliente</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="data">Data *</label>
-                            <input type="date" id="data" name="data" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label>Itens da Venda *</label>
-                            <div class="items-header">
-                                <span>Produto</span>
-                                <span>Quantidade</span>
-                                <span>Preço Unit.</span>
-                                <span>Estoque</span>
-                                <span>Total</span>
-                                <span>Ação</span>
-                            </div>
-                            <div class="sale-items">
-                                <!-- Itens serão adicionados dinamicamente aqui -->
-                            </div>
-                            <button type="button" class="btn btn-secondary" id="add-item">
-                                <i class="fas fa-plus"></i> Adicionar Item
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- NOVA SEÇÃO: RESUMO DOS TOTAIS -->
-                    <div class="totals-section">
+ <div class="form-wrapper">
+    <div class="form-card">
+                    <h2 class="form-title">Nova Venda</h2>
+                    <form id="sale-form">
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="subtotal">Subtotal</label>
-                                <input type="text" id="subtotal" value="R$ 0,00" readonly class="total-input">
+                                <label for="cliente">Cliente *</label>
+                                <select id="cliente" name="cliente" required>
+                                    <option value="">Carregando clientes...</option>
+                                </select>
+                                <div class="error-message" id="cliente-error"></div>
                             </div>
                             <div class="form-group">
-                                <label for="desconto">Desconto (%)</label>
-                                <input type="number" id="desconto" min="0" max="100" step="0.01" value="0" class="discount-input">
+                                <label for="data">Data *</label>
+                                <input type="date" id="data" name="data" class="form-control" required>
                             </div>
                             <div class="form-group">
-                                <label for="desconto-valor">Valor do Desconto</label>
-                                <input type="text" id="desconto-valor" value="R$ 0,00 (0%)" readonly class="total-input discount">
-                            </div>
-                            <div class="form-group">
-                                <label for="total">Total da Venda</label>
-                                <input type="text" id="total" name="total" value="R$ 0,00" readonly class="total-input final">
+                            <label for="status">Status da Venda</label>
+                            <select id="status" name="status" required>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Concluida" selected>Concluída</option>
+                                <option value="Cancelada">Cancelada</option>
+                            </select>
+                        </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label>Itens da Venda *</label>
+                                <div class="items-container">
+                                    <div class="items-header">
+                                        <span>Produto</span>
+                                        <span>Quantidade</span>
+                                        <span>Preço Unit.</span>
+                                        <span>Estoque</span>
+                                        <span>Total</span>
+                                        <span>Ação</span>
+                                    </div>
+                                    <div class="sale-items" id="sale-items">
+                                        <!-- Itens serão adicionados dinamicamente aqui -->
+                                    </div>
+                                    <button type="button" class="btn btn-secondary" id="add-item">
+                                        <i class="fas fa-plus"></i> Adicionar Item
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="observacoes">Observações</label>
-                            <textarea id="observacoes" name="observacoes" rows="3" placeholder="Observações sobre a venda..."></textarea>
+                        <!-- Seção de Totais -->
+                        <div class="totals-section">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="subtotal">Subtotal</label>
+                                    <input type="text" id="subtotal" value="R$ 0,00" readonly class="total-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="desconto">Desconto (%)</label>
+                                    <input type="number" id="desconto" min="0" max="100" step="0.01" value="0" class="discount-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="desconto-valor">Valor do Desconto</label>
+                                    <input type="text" id="desconto-valor" value="R$ 0,00 (0%)" readonly class="total-input discount">
+                                </div>
+                                <div class="form-group">
+                                    <label for="total">Total da Venda</label>
+                                    <input type="text" id="total" name="total" value="R$ 0,00" readonly class="total-input final">
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="window.location.href='vendas.html'">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-check"></i> Finalizar Venda
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </main>
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="observacoes">Observações</label>
+                                <textarea id="observacoes" name="observacoes" rows="3" placeholder="Observações sobre a venda..."></textarea>
+                            </div>
+                        </div>
 
-        <!-- Rodapé -->
-
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancel-btn">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="submit-btn">
+                                <i class="fas fa-check"></i> Finalizar Venda
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
 
     <script src="js tabelas/venda.js"></script>
     <script src="../js/funcoesui.js"></script>

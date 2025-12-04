@@ -54,6 +54,25 @@ const elements = {
     viewButtons: document.querySelectorAll('.view-btn')
 };
 
+// Função para formatar valores monetários com vírgula
+function formatarValor(valor) {
+    if (valor === null || valor === undefined || isNaN(valor)) {
+        return 'R$ 0,00';
+    }
+    
+    // Formatar com 2 casas decimais e vírgula como separador decimal
+    return 'R$ ' + valor.toFixed(2).replace('.', ',');
+}
+
+// Função para formatar números com separador de milhar
+function formatarNumero(numero) {
+    if (numero === null || numero === undefined || isNaN(numero)) {
+        return '0';
+    }
+    
+    return numero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     loadProdutosData();
@@ -139,17 +158,17 @@ async function loadProdutosData() {
 // Calcular métricas
 function calculateMetrics(produtos) {
     appState.metrics.totalItems = produtos.length;
-    appState.metrics.totalValue = produtos.reduce((sum, produto) => sum + (produto.preco * produto.estoque), 0);
-    appState.metrics.lowStockItems = produtos.filter(produto => produto.estoque > 0 && produto.estoque <= 5).length;
-    appState.metrics.outOfStockItems = produtos.filter(produto => produto.estoque === 0).length;
+    appState.metrics.totalValue = produtos.reduce((sum, produto) => sum + (produto.preco * (produto.estoque || 0)), 0);
+    appState.metrics.lowStockItems = produtos.filter(produto => (produto.estoque || 0) > 0 && (produto.estoque || 0) <= 5).length;
+    appState.metrics.outOfStockItems = produtos.filter(produto => (produto.estoque || 0) === 0).length;
 }
 
 // Renderizar métricas
 function renderMetrics() {
-    if (elements.totalItems) elements.totalItems.textContent = appState.metrics.totalItems;
-    if (elements.totalValue) elements.totalValue.textContent = appState.metrics.totalValue.toFixed(2);
-    if (elements.lowStockItems) elements.lowStockItems.textContent = appState.metrics.lowStockItems;
-    if (elements.outOfStockItems) elements.outOfStockItems.textContent = appState.metrics.outOfStockItems;
+    if (elements.totalItems) elements.totalItems.textContent = formatarNumero(appState.metrics.totalItems);
+    if (elements.totalValue) elements.totalValue.textContent = formatarValor(appState.metrics.totalValue);
+    if (elements.lowStockItems) elements.lowStockItems.textContent = formatarNumero(appState.metrics.lowStockItems);
+    if (elements.outOfStockItems) elements.outOfStockItems.textContent = formatarNumero(appState.metrics.outOfStockItems);
 }
 
 // Handlers de filtros
@@ -199,11 +218,11 @@ function filterProdutos(produtos) {
         
         // Filtro de nível de estoque
         const matchesStockLevel = appState.filters.stockLevel === 'all' || 
-            (appState.filters.stockLevel === 'critical' && produto.estoque <= 2) ||
-            (appState.filters.stockLevel === 'low' && produto.estoque <= 5) ||
-            (appState.filters.stockLevel === 'medium' && produto.estoque <= 10) ||
-            (appState.filters.stockLevel === 'good' && produto.estoque > 10) ||
-            (appState.filters.stockLevel === 'out' && produto.estoque === 0);
+            (appState.filters.stockLevel === 'critical' && (produto.estoque || 0) <= 2) ||
+            (appState.filters.stockLevel === 'low' && (produto.estoque || 0) <= 5) ||
+            (appState.filters.stockLevel === 'medium' && (produto.estoque || 0) <= 10) ||
+            (appState.filters.stockLevel === 'good' && (produto.estoque || 0) > 10) ||
+            (appState.filters.stockLevel === 'out' && (produto.estoque || 0) === 0);
         
         // Filtro de categoria
         const matchesCategory = appState.filters.category === 'all' || 
@@ -239,39 +258,45 @@ function renderTableView(produtos, totalProdutos) {
         return;
     }
     
-    elements.inventoryTableBody.innerHTML = produtos.map(produto => `
-        <tr>
-            <td>${produto.id}</td>
-            <td>
-                <div class="product-name">${escapeHtml(produto.nome)}</div>
-            </td>
-            <td>${escapeHtml(produto.descricao || '-')}</td>
-            <td>${produto.tipo || '-'}</td>
-            <td>
-                <div class="stock-info">
-                    <span class="stock-quantity ${getStockClass(produto.estoque)}">${produto.estoque}</span>
-                    ${produto.estoque <= 5 ? '<i class="fas fa-exclamation-triangle low-stock-warning"></i>' : ''}
-                </div>
-            </td>
-            <td>R$ ${produto.preco.toFixed(2)}</td>
-            <td>R$ ${(produto.preco * produto.estoque).toFixed(2)}</td>
-            <td>
-                <span class="status-badge ${produto.status === 'Ativo' ? 'status-active' : 'status-inactive'}">
-                    ${produto.status || 'Inativo'}
-                </span>
-            </td>
-            <td>
-                <div class="action-buttons">
-                    <button class="btn btn-edit" onclick="editarProduto(${produto.id})">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                    <button class="btn btn-delete" onclick="confirmarExclusao(${produto.id}, '${escapeHtml(produto.nome)}')">
-                        <i class="fas fa-trash"></i> Excluir
-                    </button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
+    elements.inventoryTableBody.innerHTML = produtos.map(produto => {
+        const estoque = produto.estoque || 0;
+        const preco = produto.preco || 0;
+        const valorTotal = preco * estoque;
+        
+        return `
+            <tr>
+                <td>${produto.id}</td>
+                <td>
+                    <div class="product-name">${escapeHtml(produto.nome)}</div>
+                </td>
+                <td>${escapeHtml(produto.descricao || '-')}</td>
+                <td>${produto.tipo || '-'}</td>
+                <td>
+                    <div class="stock-info">
+                        <span class="stock-quantity ${getStockClass(estoque)}">${formatarNumero(estoque)}</span>
+                        ${estoque <= 5 ? '<i class="fas fa-exclamation-triangle low-stock-warning"></i>' : ''}
+                    </div>
+                </td>
+                <td>${formatarValor(preco)}</td>
+                <td>${formatarValor(valorTotal)}</td>
+                <td>
+                    <span class="status-badge ${produto.status === 'Ativo' ? 'status-active' : 'status-inactive'}">
+                        ${produto.status || 'Inativo'}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-edit" onclick="editarProduto(${produto.id})">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-delete" onclick="confirmarExclusao(${produto.id}, '${escapeHtml(produto.nome)}')">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // Renderizar visualização em cards
@@ -288,57 +313,63 @@ function renderCardsView(produtos, totalProdutos) {
         return;
     }
     
-    elements.cardsView.innerHTML = produtos.map(produto => `
-        <div class="product-card">
-            <div class="card-header">
-                <div class="product-avatar">
-                    <i class="fas fa-box"></i>
-                </div>
-                <div class="product-info">
-                    <h3>${escapeHtml(produto.nome)}</h3>
-                    <p class="product-id">ID: ${produto.id}</p>
-                </div>
-                <span class="status-badge ${produto.status === 'Ativo' ? 'status-active' : 'status-inactive'}">
-                    ${produto.status || 'Inativo'}
-                </span>
-            </div>
-            
-            <div class="card-body">
-                <p class="product-description">${escapeHtml(produto.descricao || 'Sem descrição')}</p>
-                
-                <div class="product-meta">
-                    <div class="meta-item">
-                        <span class="meta-label">Categoria</span>
-                        <span class="meta-value">${produto.tipo || '-'}</span>
+    elements.cardsView.innerHTML = produtos.map(produto => {
+        const estoque = produto.estoque || 0;
+        const preco = produto.preco || 0;
+        const valorTotal = preco * estoque;
+        
+        return `
+            <div class="product-card">
+                <div class="card-header">
+                    <div class="product-avatar">
+                        <i class="fas fa-box"></i>
                     </div>
-                    <div class="meta-item">
-                        <span class="meta-label">Preço</span>
-                        <span class="meta-value">R$ ${produto.preco.toFixed(2)}</span>
+                    <div class="product-info">
+                        <h3>${escapeHtml(produto.nome)}</h3>
+                        <p class="product-id">ID: ${produto.id}</p>
                     </div>
+                    <span class="status-badge ${produto.status === 'Ativo' ? 'status-active' : 'status-inactive'}">
+                        ${produto.status || 'Inativo'}
+                    </span>
                 </div>
                 
-                <div class="stock-section">
-                    <div class="stock-level ${getStockClass(produto.estoque)}">
-                        <i class="fas fa-boxes"></i>
-                        <span>Estoque: ${produto.estoque}</span>
-                        ${produto.estoque <= 5 ? '<i class="fas fa-exclamation-triangle"></i>' : ''}
+                <div class="card-body">
+                    <p class="product-description">${escapeHtml(produto.descricao || 'Sem descrição')}</p>
+                    
+                    <div class="product-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Categoria</span>
+                            <span class="meta-value">${produto.tipo || '-'}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Preço</span>
+                            <span class="meta-value">${formatarValor(preco)}</span>
+                        </div>
                     </div>
-                    <div class="total-value">
-                        Valor Total: R$ ${(produto.preco * produto.estoque).toFixed(2)}
+                    
+                    <div class="stock-section">
+                        <div class="stock-level ${getStockClass(estoque)}">
+                            <i class="fas fa-boxes"></i>
+                            <span>Estoque: ${formatarNumero(estoque)}</span>
+                            ${estoque <= 5 ? '<i class="fas fa-exclamation-triangle"></i>' : ''}
+                        </div>
+                        <div class="total-value">
+                            Valor Total: ${formatarValor(valorTotal)}
+                        </div>
                     </div>
                 </div>
+                
+                <div class="card-actions">
+                    <button class="btn btn-edit" onclick="editarProduto(${produto.id})">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                    <button class="btn btn-delete" onclick="confirmarExclusao(${produto.id}, '${escapeHtml(produto.nome)}')">
+                        <i class="fas fa-trash"></i> Excluir
+                    </button>
+                </div>
             </div>
-            
-            <div class="card-actions">
-                <button class="btn btn-edit" onclick="editarProduto(${produto.id})">
-                    <i class="fas fa-edit"></i> Editar
-                </button>
-                <button class="btn btn-delete" onclick="confirmarExclusao(${produto.id}, '${escapeHtml(produto.nome)}')">
-                    <i class="fas fa-trash"></i> Excluir
-                </button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Função auxiliar para determinar a classe do estoque
@@ -401,44 +432,128 @@ function novoProduto() {
 }
 
 // Exportação
-    function showExportOptions() {
-        const exportMenu = document.createElement('div');
-        exportMenu.className = 'export-menu';
-        exportMenu.innerHTML = `
-            <button onclick="exportarParaExcel()" class="export-option">
-                <i class="fas fa-file-excel"></i> Exportar para Excel
-            </button>
-            <button onclick="exportarParaPDF()" class="export-option">
-                <i class="fas fa-file-pdf"></i> Exportar para PDF
-            </button>
-        `;
-        
-        // Posicionar o menu
-        const rect = elements.exportBtn.getBoundingClientRect();
-        exportMenu.style.position = 'fixed';
-        exportMenu.style.top = `${rect.bottom + 5}px`;
-        exportMenu.style.right = `${window.innerWidth - rect.right}px`;
-        
-        document.body.appendChild(exportMenu);
-        
-        // Remover o menu após clicar fora
-        function closeMenu(e) {
-            if (!exportMenu.contains(e.target) && e.target !== elements.exportBtn) {
-                exportMenu.remove();
-                document.removeEventListener('click', closeMenu);
-            }
+function showExportOptions() {
+    const exportMenu = document.createElement('div');
+    exportMenu.className = 'export-menu';
+    exportMenu.innerHTML = `
+        <button onclick="exportarParaExcel()" class="export-option">
+            <i class="fas fa-file-excel"></i> Exportar para Excel
+        </button>
+        <button onclick="exportarParaPDF()" class="export-option">
+            <i class="fas fa-file-pdf"></i> Exportar para PDF
+        </button>
+    `;
+    
+    // Posicionar o menu
+    const rect = elements.exportBtn.getBoundingClientRect();
+    exportMenu.style.position = 'fixed';
+    exportMenu.style.top = `${rect.bottom + 5}px`;
+    exportMenu.style.right = `${window.innerWidth - rect.right}px`;
+    
+    document.body.appendChild(exportMenu);
+    
+    // Remover o menu após clicar fora
+    function closeMenu(e) {
+        if (!exportMenu.contains(e.target) && e.target !== elements.exportBtn) {
+            exportMenu.remove();
+            document.removeEventListener('click', closeMenu);
         }
-        
-        setTimeout(() => document.addEventListener('click', closeMenu), 100);
     }
+    
+    setTimeout(() => document.addEventListener('click', closeMenu), 100);
+}
 
-    // Exportar para Excel
-    function exportarParaExcel() {
-        const filteredProdutos = filterProdutos(appState.produtos);
+// Exportar para Excel
+function exportarParaExcel() {
+    const filteredProdutos = filterProdutos(appState.produtos);
+    
+    // Criar tabela HTML para exportação
+    let html = `
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Estoque</th>
+                    <th>Preço Unit.</th>
+                    <th>Valor Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    filteredProdutos.forEach(produto => {
+        const estoque = produto.estoque || 0;
+        const preco = produto.preco || 0;
+        const valorTotal = preco * estoque;
         
-        // Criar tabela HTML para exportação
-        let html = `
-            <table border="1">
+        html += `
+            <tr>
+                <td>${produto.id}</td>
+                <td>${escapeHtml(produto.nome)}</td>
+                <td>${escapeHtml(produto.descricao || '')}</td>
+                <td>${produto.tipo || '-'}</td>
+                <td>${formatarNumero(estoque)}</td>
+                <td>${formatarValor(preco)}</td>
+                <td>${formatarValor(valorTotal)}</td>
+                <td>${produto.status || 'Inativo'}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+            </tbody>
+        </table>
+    `;
+    
+    const nomeArquivo = `estoque_${new Date().toISOString().split('T')[0]}.xls`;
+    
+    // Criar blob e fazer download
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = nomeArquivo;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotification('Exportação para Excel realizada com sucesso!', 'success');
+}
+
+// Exportar para PDF
+function exportarParaPDF() {
+    const filteredProdutos = filterProdutos(appState.produtos);
+    
+    // Criar conteúdo HTML para o PDF
+    const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Relatório de Estoque</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #333; text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f5f5f5; font-weight: bold; }
+                .header-info { margin-bottom: 20px; }
+                .summary { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+            </style>
+        </head>
+        <body>
+            <h1>Relatório de Estoque - NexoERP</h1>
+            
+            <div class="header-info">
+                <p><strong>Data de emissão:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                <p><strong>Total de itens:</strong> ${formatarNumero(filteredProdutos.length)}</p>
+                <p><strong>Valor total em estoque:</strong> ${formatarValor(filteredProdutos.reduce((sum, p) => sum + ((p.preco || 0) * (p.estoque || 0)), 0))}</p>
+            </div>
+            
+            <table>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -452,157 +567,83 @@ function novoProduto() {
                     </tr>
                 </thead>
                 <tbody>
-        `;
-        
-        filteredProdutos.forEach(produto => {
-            html += `
-                <tr>
-                    <td>${produto.id}</td>
-                    <td>${escapeHtml(produto.nome)}</td>
-                    <td>${escapeHtml(produto.descricao || '')}</td>
-                    <td>${produto.tipo || '-'}</td>
-                    <td>${produto.estoque}</td>
-                    <td>R$ ${produto.preco.toFixed(2)}</td>
-                    <td>R$ ${(produto.preco * produto.estoque).toFixed(2)}</td>
-                    <td>${produto.status || 'Inativo'}</td>
-                </tr>
-            `;
-        });
-        
-        html += `
-                </tbody>
-            </table>
-        `;
-        
-        const nomeArquivo = `estoque_${new Date().toISOString().split('T')[0]}.xls`;
-        
-        // Criar blob e fazer download
-        const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = nomeArquivo;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        showNotification('Exportação para Excel realizada com sucesso!', 'success');
-    }
-
-    // Exportar para PDF
-    function exportarParaPDF() {
-        const filteredProdutos = filterProdutos(appState.produtos);
-        
-        // Criar conteúdo HTML para o PDF
-        const htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Relatório de Estoque</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    h1 { color: #333; text-align: center; margin-bottom: 20px; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    th { background-color: #f5f5f5; font-weight: bold; }
-                    .header-info { margin-bottom: 20px; }
-                    .summary { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-                </style>
-            </head>
-            <body>
-                <h1>Relatório de Estoque - NexoERP</h1>
-                
-                <div class="header-info">
-                    <p><strong>Data de emissão:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
-                    <p><strong>Total de itens:</strong> ${filteredProdutos.length}</p>
-                    <p><strong>Valor total em estoque:</strong> R$ ${filteredProdutos.reduce((sum, p) => sum + (p.preco * p.estoque), 0).toFixed(2)}</p>
-                </div>
-                
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nome</th>
-                            <th>Descrição</th>
-                            <th>Categoria</th>
-                            <th>Estoque</th>
-                            <th>Preço Unit.</th>
-                            <th>Valor Total</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filteredProdutos.map(produto => `
+                    ${filteredProdutos.map(produto => {
+                        const estoque = produto.estoque || 0;
+                        const preco = produto.preco || 0;
+                        const valorTotal = preco * estoque;
+                        
+                        return `
                             <tr>
                                 <td>${produto.id}</td>
                                 <td>${escapeHtml(produto.nome)}</td>
                                 <td>${escapeHtml(produto.descricao || '')}</td>
                                 <td>${produto.tipo || '-'}</td>
-                                <td>${produto.estoque}</td>
-                                <td>R$ ${produto.preco.toFixed(2)}</td>
-                                <td>R$ ${(produto.preco * produto.estoque).toFixed(2)}</td>
+                                <td>${formatarNumero(estoque)}</td>
+                                <td>${formatarValor(preco)}</td>
+                                <td>${formatarValor(valorTotal)}</td>
                                 <td>${produto.status || 'Inativo'}</td>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                
-                <div style="margin-top: 30px; text-align: center; color: #666;">
-                    <p>Relatório gerado automaticamente pelo Sistema NexoERP</p>
-                </div>
-            </body>
-            </html>
-        `;
-        
-        // Abrir em nova janela para impressão/salvar como PDF
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        
-        // Aguardar o carregamento e então imprimir/salvar como PDF
-        printWindow.onload = function() {
-            printWindow.print();
-        };
-        
-        showNotification('PDF gerado com sucesso! Use a opção "Salvar como PDF" na impressora.', 'success');
-    }
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+            
+            <div style="margin-top: 30px; text-align: center; color: #666;">
+                <p>Relatório gerado automaticamente pelo Sistema NexoERP</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // Abrir em nova janela para impressão/salvar como PDF
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // Aguardar o carregamento e então imprimir/salvar como PDF
+    printWindow.onload = function() {
+        printWindow.print();
+    };
+    
+    showNotification('PDF gerado com sucesso! Use a opção "Salvar como PDF" na impressora.', 'success');
+}
 
-    // Funções auxiliares
-    async function fetchData(url, options = {}) {
-        const defaultOptions = {
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
-
-        const finalOptions = { ...defaultOptions, ...options };
-        
-        try {
-            const response = await fetch(url, finalOptions);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Erro ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('Erro na requisição:', error);
-            throw error;
+// Funções auxiliares
+async function fetchData(url, options = {}) {
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json'
         }
-    }
+    };
 
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+    const finalOptions = { ...defaultOptions, ...options };
+    
+    try {
+        const response = await fetch(url, finalOptions);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Erro ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        throw error;
     }
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
 function showLoadingState() {
     if (elements.inventoryTableBody) {

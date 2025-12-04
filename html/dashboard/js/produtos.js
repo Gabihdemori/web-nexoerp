@@ -1,4 +1,3 @@
-
 const API_CONFIG = {
     PRODUTOS: "https://api-nexoerp.vercel.app/api/produtos"
 };
@@ -20,7 +19,11 @@ const appState = {
         servicos: 0,
         estoqueBaixo: 0
     },
-    currentView: 'table'
+    currentView: 'table',
+    paginacao: {
+        total: 0,
+        pages: 0
+    }
 };
 
 // Elementos DOM para produtos
@@ -54,6 +57,7 @@ function debugFormulario() {
     console.log('status:', document.getElementById('status'));
     console.log('descricao:', document.getElementById('descricao'));
 }
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -61,10 +65,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function initializeApp() {
     try {
-        await loadProdutosData();
         setupEventListeners();
         setupViewToggle();
         updateLastAccess();
+        await loadProdutosData();
     } catch (error) {
         console.error('Erro na inicialização:', error);
         showNotification('Erro ao carregar a página: ' + error.message, 'error');
@@ -99,13 +103,15 @@ function setupEventListeners() {
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            const modal = document.querySelector('.modal-overlay');
-            if (modal) modal.remove();
+            const modals = document.querySelectorAll('.modal-overlay');
+            modals.forEach(modal => modal.remove());
         }
     });
 }
 
 function setupViewToggle() {
+    if (!elements.viewButtons) return;
+    
     elements.viewButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             const viewType = this.getAttribute('data-view');
@@ -113,17 +119,73 @@ function setupViewToggle() {
             this.classList.add('active');
             appState.currentView = viewType;
             
-            if (viewType === 'table') {
-                elements.tableView.style.display = 'block';
-                elements.cardsViewContainer.style.display = 'none';
-            } else {
-                elements.tableView.style.display = 'none';
-                elements.cardsViewContainer.style.display = 'grid';
+            if (elements.tableView && elements.cardsViewContainer) {
+                if (viewType === 'table') {
+                    elements.tableView.style.display = 'block';
+                    elements.cardsViewContainer.style.display = 'none';
+                } else {
+                    elements.tableView.style.display = 'none';
+                    elements.cardsViewContainer.style.display = 'grid';
+                }
             }
             
             renderProdutos();
         });
     });
+}
+
+// Função melhorada para fetchData
+async function fetchData(url, options = {}) {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login.html';
+            throw new Error('Não autenticado');
+        }
+        
+        const defaultHeaders = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+        
+        const config = {
+            ...options,
+            headers: {
+                ...defaultHeaders,
+                ...options.headers
+            }
+        };
+        
+        const response = await fetch(url, config);
+        
+        if (response.status === 204) {
+            return {};
+        }
+        
+        if (!response.ok) {
+            let errorMessage = `Erro ${response.status}: ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorData.message || errorMessage;
+                if (errorData.detalhes) {
+                    errorMessage += ` - ${Array.isArray(errorData.detalhes) ? errorData.detalhes.join(', ') : errorData.detalhes}`;
+                }
+            } catch (e) {
+                const text = await response.text();
+                if (text) errorMessage = text;
+            }
+            throw new Error(errorMessage);
+        }
+        
+        if (response.headers.get('content-type')?.includes('application/json')) {
+            return await response.json();
+        }
+        
+        return {};
+    } catch (error) {
+        console.error('Erro no fetchData:', error);
+        throw error;
+    }
 }
 
 async function loadProdutosData() {
@@ -132,40 +194,31 @@ async function loadProdutosData() {
         
         const queryParams = new URLSearchParams();
         
-        // Adicionar filtro de tipo (converte para o valor esperado pelo backend)
-        console.log('Filtro de tipo atual:', appState.filters.tipo);
         if (appState.filters.tipo && appState.filters.tipo !== 'all') {
             const tipoMap = {
                 'product': 'Produto',
                 'service': 'Servico'
             };
-            const tipoValue = tipoMap[appState.filters.tipo];
-            console.log('Convertendo tipo para:', tipoValue);
+            const tipoValue = tipoMap[appState.filters.tipo] || appState.filters.tipo;
             queryParams.append('tipo', tipoValue);
         }
         
-        // Adicionar filtro de status
         if (appState.filters.status && appState.filters.status !== 'all') {
             queryParams.append('status', appState.filters.status);
         }
         
-        // Adicionar termo de busca
         if (appState.searchTerm) {
             queryParams.append('search', appState.searchTerm);
         }
         
-        // Adicionar paginação
         queryParams.append('page', appState.currentPage);
         queryParams.append('limit', appState.itemsPerPage);
         
         const url = `${API_CONFIG.PRODUTOS}?${queryParams}`;
-        console.log('🔍 URL da requisição:', url);
         
         const produtosData = await fetchData(url);
         
-        // Armazenar os produtos recebidos
         appState.produtos = produtosData.produtos || [];
-        console.log('Produtos recebidos:', appState.produtos);
         appState.paginacao = produtosData.paginacao || {};
         
         calculateMetrics(appState.produtos);
@@ -185,7 +238,9 @@ function calculateMetrics(produtos) {
     appState.metrics.total = produtos.length;
     appState.metrics.produtos = produtos.filter(p => p.tipo === 'Produto').length;
     appState.metrics.servicos = produtos.filter(p => p.tipo === 'Servico').length;
-    appState.metrics.estoqueBaixo = produtos.filter(p => p.estoque <= 10 && p.estoque > 0).length;
+    appState.metrics.estoqueBaixo = produtos.filter(p => 
+        p.tipo === 'Produto' && p.estoque <= 10 && p.estoque > 0
+    ).length;
 }
 
 function renderMetrics() {
@@ -198,7 +253,6 @@ function renderMetrics() {
 function handleFilterChange(e) {
     const filterName = e.target.id.replace('Filter', '');
     appState.filters[filterName] = e.target.value;
-    console.log(`Filtro ${filterName} alterado para:`, e.target.value);
     appState.currentPage = 1;
     loadProdutosData();
 }
@@ -216,8 +270,8 @@ function handleItemsPerPageChange(e) {
 }
 
 function renderProdutos() {
-    // Primeiro, aplicar filtro de estoque (client-side) se necessário
     let produtosExibicao = [...appState.produtos];
+    
     if (appState.filters.stock && appState.filters.stock !== 'all') {
         produtosExibicao = filterProdutos(produtosExibicao);
     }
@@ -229,13 +283,10 @@ function renderProdutos() {
     } else {
         renderCardsView(paginatedProdutos, produtosExibicao.length);
     }
-    
-    renderPagination(produtosExibicao.length);
 }
 
 function filterProdutos(produtos) {
     return produtos.filter(produto => {
-        // Filtro de estoque client-side
         if (appState.filters.stock === 'out') {
             return produto.estoque === 0 || produto.estoque === null;
         } else if (appState.filters.stock === 'available') {
@@ -289,7 +340,7 @@ function renderTableView(produtos, totalProdutos) {
             <td class="price-cell">R$ ${(produto.preco ?? 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
             <td>
                 <span class="stock-badge ${getStockClass(produto.estoque)}">
-                    ${produto.estoque ?? 0}
+                    ${produto.tipo === 'Servico' ? 'N/A' : (produto.estoque ?? 0)}
                 </span>
             </td>
             <td>
@@ -355,9 +406,10 @@ function renderCardsView(produtos, totalProdutos) {
                 <div class="product-meta">
                     <div class="meta-item">
                         <span class="meta-label">Estoque</span>
-                        <span class="meta-value stock-badge ${getStockClass(produto.estoque)}">${produto.estoque ?? 0}</span>
+                        <span class="meta-value stock-badge ${getStockClass(produto.estoque)}">
+                            ${produto.tipo === 'Servico' ? 'N/A' : (produto.estoque ?? 0)}
+                        </span>
                     </div>
-                    
                 </div>
             </div>
             
@@ -456,12 +508,11 @@ function mostrarModalDetalhes(produto) {
         maximumFractionDigits: 2
     });
 
-    /* É AQUI QUE MUDA - Aumente o max-width para caber mais conteúdo */
     const modalHTML = `
         <div class="modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
             <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-                    <h3 style="margin: 0; color: #333;">Detalhes do Produto</h3>
+                    <h3 style="margin: 0; color: #333;">Detalhes do ${produto.tipo === 'Servico' ? 'Serviço' : 'Produto'}</h3>
                     <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -472,7 +523,7 @@ function mostrarModalDetalhes(produto) {
                             <div class="detail-grid" style="display: grid; gap: 12px;">
                                 <div class="detail-row">
                                     <strong style="color: #333;">Nome:</strong> 
-                                    <span>${produto.nome || 'Não informado'}</span>
+                                    <span>${escapeHtml(produto.nome || 'Não informado')}</span>
                                 </div>
                                 
                                 <div class="detail-row">
@@ -496,12 +547,12 @@ function mostrarModalDetalhes(produto) {
 
                         <!-- Coluna 2: Estoque e Métricas -->
                         <div class="info-section">
-                            <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #28a745; padding-bottom: 5px;">Estoque e Métricas</h4>
+                            <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #28a745; padding-bottom: 5px;">${produto.tipo === 'Servico' ? 'Detalhes' : 'Estoque e Métricas'}</h4>
                             <div class="detail-grid" style="display: grid; gap: 12px;">
                                 <div class="detail-row">
-                                    <strong style="color: #333;">Estoque Atual:</strong> 
+                                    <strong style="color: #333;">${produto.tipo === 'Servico' ? 'Tipo de Serviço' : 'Estoque Atual'}:</strong> 
                                     <span class="stock-badge ${getStockClass(produto.estoque)}">
-                                        ${produto.estoque ?? 0}
+                                        ${produto.tipo === 'Servico' ? 'Serviço' : (produto.estoque ?? 0)}
                                     </span>
                                 </div>
                                 
@@ -522,10 +573,6 @@ function mostrarModalDetalhes(produto) {
                         <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #6c757d; padding-bottom: 5px;">Informações do Sistema</h4>
                         <div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                             <div class="detail-row">
-                                <strong style="color: #333;">Criado por:</strong> 
-                                <span>${produto.usuario ? produto.usuario.nome : 'Usuário não encontrado'}</span>
-                            </div>
-                            <div class="detail-row">
                                 <strong style="color: #333;">Criado em:</strong> 
                                 <span>${produto.criadoEm || 'Não informado'}</span>
                             </div>
@@ -533,16 +580,12 @@ function mostrarModalDetalhes(produto) {
                                 <strong style="color: #333;">Atualizado em:</strong> 
                                 <span>${produto.atualizadoEm || 'Não informado'}</span>
                             </div>
-                            <div class="detail-row">
-                                <strong style="color: #333;">Última Atualização:</strong> 
-                                <span>${produto.ultimaAtualizacao || 'Não informado'}</span>
-                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer" style="margin-top: 25px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid #eee; padding-top: 20px;">
                     <button onclick="editarProduto(${produto.id})" class="btn btn-primary">
-                        <i class="fas fa-edit"></i> Editar Produto
+                        <i class="fas fa-edit"></i> Editar
                     </button>
                     <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-secondary">Fechar</button>
                 </div>
@@ -565,16 +608,16 @@ async function editarProduto(produtoId) {
 }
 
 function mostrarModalEdicao(produto) {
-    /* É AQUI QUE MUDA - Aumente o max-width para caber todos os campos */
     const modalHTML = `
         <div class="modal-overlay edicao-produto-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
             <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto;">
                 <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-                    <h3 style="margin: 0; color: #333;">Editar Produto</h3>
+                    <h3 style="margin: 0; color: #333;">Editar ${produto.tipo === 'Servico' ? 'Serviço' : 'Produto'}</h3>
                     <button class="close-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
                 </div>
                 <form id="produto-edit-form">
                     <input type="hidden" id="produtoId" value="${produto.id}">
+                    <input type="hidden" id="tipoOriginal" value="${produto.tipo}">
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <!-- Coluna 1: Informações Básicas -->
@@ -586,7 +629,6 @@ function mostrarModalEdicao(produto) {
                                 <input type="text" id="nome" value="${produto.nome || ''}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" required>
                             </div>
 
-                           
                             <div class="form-group" style="margin-bottom: 15px;">
                                 <label for="tipo" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo *</label>
                                 <select id="tipo" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" required>
@@ -611,17 +653,12 @@ function mostrarModalEdicao(produto) {
 
                         <!-- Coluna 2: Estoque e Detalhes -->
                         <div class="form-section">
-                            <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #28a745; padding-bottom: 5px;">Estoque</h4>
+                            <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #28a745; padding-bottom: 5px;">${produto.tipo === 'Servico' ? 'Detalhes do Serviço' : 'Estoque'}</h4>
                             
-                            <div class="form-group" style="margin-bottom: 15px;">
+                            <div class="form-group estoque-group" style="margin-bottom: 15px; ${produto.tipo === 'Servico' ? 'display: none;' : ''}">
                                 <label for="estoque" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Estoque *</label>
-                                <input type="number" id="estoque" min="0" value="${produto.estoque || 0}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" required>
-                            </div>
-
-                                                     
-
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                                
+                                <input type="number" id="estoque" min="0" value="${produto.estoque || 0}" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" ${produto.tipo === 'Produto' ? 'required' : ''}>
+                                <small style="color: #666; font-size: 0.85rem;">Apenas para produtos</small>
                             </div>
                         </div>
                     </div>
@@ -630,7 +667,7 @@ function mostrarModalEdicao(produto) {
                     <div class="form-section" style="margin-top: 20px;">
                         <h4 style="margin: 0 0 15px 0; color: #555; border-bottom: 2px solid #ffc107; padding-bottom: 5px;">Descrição</h4>
                         <div class="form-group" style="margin-bottom: 15px;">
-                            <textarea id="descricao" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical; min-height: 100px;" placeholder="Digite a descrição do produto...">${produto.descricao || ''}</textarea>
+                            <textarea id="descricao" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: vertical; min-height: 100px;" placeholder="Digite a descrição...">${produto.descricao || ''}</textarea>
                         </div>
                     </div>
 
@@ -661,12 +698,27 @@ function configurarModalEdicao() {
     const modal = document.querySelector('.edicao-produto-modal');
     const form = document.getElementById('produto-edit-form');
     const closeBtn = modal.querySelector('.close-modal');
+    const tipoSelect = document.getElementById('tipo');
+    const estoqueGroup = document.querySelector('.estoque-group');
+    const estoqueInput = document.getElementById('estoque');
 
     closeBtn.addEventListener('click', fecharModalEdicao);
     
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             fecharModalEdicao();
+        }
+    });
+
+    // Mostrar/ocultar campo estoque baseado no tipo
+    tipoSelect.addEventListener('change', function() {
+        if (this.value === 'Produto') {
+            estoqueGroup.style.display = 'block';
+            estoqueInput.required = true;
+        } else {
+            estoqueGroup.style.display = 'none';
+            estoqueInput.required = false;
+            estoqueInput.value = 0;
         }
     });
 
@@ -682,9 +734,6 @@ function fecharModalEdicao() {
 
 async function handleSubmitEdicao(e) {
     e.preventDefault();
-    
-    // DEBUG TEMPORÁRIO
-    debugFormulario();
     
     const form = document.getElementById('produto-edit-form');
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -707,7 +756,6 @@ async function handleSubmitEdicao(e) {
 }
 
 function obterDadosFormulario() {
-    // Verificar se todos os elementos existem antes de acessá-los
     const produtoIdElement = document.getElementById('produtoId');
     const nomeElement = document.getElementById('nome');
     const tipoElement = document.getElementById('tipo');
@@ -716,19 +764,29 @@ function obterDadosFormulario() {
     const statusElement = document.getElementById('status');
     const descricaoElement = document.getElementById('descricao');
 
-    // Verificar se os elementos obrigatórios existem
-    if (!produtoIdElement || !nomeElement || !tipoElement || !precoElement || !estoqueElement || !statusElement) {
-        throw new Error('Erro: Alguns campos do formulário não foram encontrados.');
+    if (!produtoIdElement || !nomeElement || !tipoElement || !precoElement || !statusElement) {
+        throw new Error('Erro: Alguns campos obrigatórios não foram encontrados.');
     }
 
     const dados = {
         nome: nomeElement.value.trim(),
         tipo: tipoElement.value,
         preco: parseFloat(precoElement.value),
-        estoque: parseInt(estoqueElement.value),
         status: statusElement.value,
         descricao: descricaoElement ? descricaoElement.value.trim() || null : null,
     };
+
+    // Adicionar estoque apenas para produtos
+    if (tipoElement.value === 'Produto') {
+        const estoqueValue = estoqueElement ? parseInt(estoqueElement.value) : 0;
+        if (isNaN(estoqueValue) || estoqueValue < 0) {
+            throw new Error('Estoque deve ser um número válido e não negativo');
+        }
+        dados.estoque = estoqueValue;
+    } else {
+        // Para serviços, estoque deve ser null
+        dados.estoque = null;
+    }
 
     // Validações básicas
     if (!dados.nome) {
@@ -737,25 +795,19 @@ function obterDadosFormulario() {
     if (isNaN(dados.preco) || dados.preco < 0) {
         throw new Error('Preço deve ser um número válido e não negativo');
     }
-    if (isNaN(dados.estoque) || dados.estoque < 0) {
-        throw new Error('Estoque deve ser um número válido e não negativo');
-    }
 
     return { 
         produtoId: produtoIdElement.value, 
         dados 
     };
 }
+
 async function atualizarProduto({ produtoId, dados }) {
     try {
-        // Validações básicas
-        if (!dados.nome || dados.preco < 0 || dados.estoque < 0) {
-            throw new Error('Dados inválidos. Verifique os campos obrigatórios.');
-        }
-
         const response = await fetch(`${API_CONFIG.PRODUTOS}/${produtoId}`, {
             method: 'PUT',
             headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(dados)
@@ -768,7 +820,7 @@ async function atualizarProduto({ produtoId, dados }) {
             
             setTimeout(() => {
                 fecharModalEdicao();
-                loadProdutosData(); // Recarregar a lista
+                loadProdutosData();
             }, 1500);
         } else {
             const errorMessage = result.error || result.detalhes || result.message || 'Erro ao atualizar produto';
@@ -793,7 +845,7 @@ function confirmarExclusaoProduto(produtoId, produtoNome) {
                 </div>
                 <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                     <button type="button" class="btn btn-secondary" onclick="fecharModalConfirmacao()" style="padding: 10px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
-                    <button type="button" class="btn btn-danger" onclick="excluirProdutoModal()" style="padding: 10px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Excluir</button>
+                    <button type="button" class="btn btn-danger" onclick="excluirProduto(${produtoId})" style="padding: 10px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Excluir</button>
                 </div>
             </div>
         </div>
@@ -810,9 +862,24 @@ function confirmarExclusaoProduto(produtoId, produtoNome) {
             fecharModalConfirmacao();
         }
     });
+}
 
-    // Armazenar o ID do produto para exclusão
-    window.produtoParaExcluir = produtoId;
+async function excluirProduto(produtoId) {
+    try {
+        await fetchData(`${API_CONFIG.PRODUTOS}/${produtoId}`, {
+            method: 'DELETE'
+        });
+
+        fecharModalConfirmacao();
+        fecharModalEdicao();
+        
+        showNotification('Produto excluído com sucesso!', 'success');
+        await loadProdutosData();
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        mostrarErroModal(error.message || 'Erro ao excluir produto');
+    }
 }
 
 function fecharModalConfirmacao() {
@@ -820,44 +887,32 @@ function fecharModalConfirmacao() {
     if (modal) {
         modal.remove();
     }
-    window.produtoParaExcluir = null;
-}
-
-async function excluirProdutoModal() {
-    if (!window.produtoParaExcluir) return;
-    
-    try {
-        await fetchData(`${API_CONFIG.PRODUTOS}/${window.produtoParaExcluir}`, {
-            method: 'DELETE'
-        });
-
-        mostrarSucessoModal('Produto excluído com sucesso!');
-        fecharModalConfirmacao();
-        
-        setTimeout(() => {
-            fecharModalEdicao();
-            loadProdutosData();
-        }, 1500);
-    } catch (error) {
-        console.error('Erro:', error);
-        mostrarErroModal(error.message);
-    } finally {
-        window.produtoParaExcluir = null;
-    }
 }
 
 function mostrarErroModal(mensagem) {
     const errorDiv = document.getElementById('errorMsg');
-    errorDiv.textContent = mensagem;
-    errorDiv.style.display = 'block';
-    document.getElementById('successMsg').style.display = 'none';
+    if (errorDiv) {
+        errorDiv.textContent = mensagem;
+        errorDiv.style.display = 'block';
+        
+        const successDiv = document.getElementById('successMsg');
+        if (successDiv) successDiv.style.display = 'none';
+    } else {
+        showNotification(mensagem, 'error');
+    }
 }
 
 function mostrarSucessoModal(mensagem) {
     const successDiv = document.getElementById('successMsg');
-    successDiv.textContent = mensagem;
-    successDiv.style.display = 'block';
-    document.getElementById('errorMsg').style.display = 'none';
+    if (successDiv) {
+        successDiv.textContent = mensagem;
+        successDiv.style.display = 'block';
+        
+        const errorDiv = document.getElementById('errorMsg');
+        if (errorDiv) errorDiv.style.display = 'none';
+    } else {
+        showNotification(mensagem, 'success');
+    }
 }
 
 // ========== FUNÇÕES DE APOIO ==========
@@ -872,16 +927,13 @@ function novoProduto() {
 }
 
 function getStockClass(estoque) {
+    if (estoque === null || estoque === undefined) return 'no-stock';
     if (estoque === 0) return 'out-of-stock';
     if (estoque <= 10) return 'low-stock';
     return 'in-stock';
 }
 
-let currentProdutoToDelete = null;
-
 function confirmarExclusao(produtoId, produtoNome) {
-    currentProdutoToDelete = produtoId;
-    
     const modalHTML = `
         <div class="modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
             <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
@@ -894,7 +946,7 @@ function confirmarExclusao(produtoId, produtoNome) {
                 </div>
                 <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-secondary">Cancelar</button>
-                    <button onclick="executarExclusao()" class="btn btn-danger">Excluir</button>
+                    <button onclick="executarExclusao(${produtoId})" class="btn btn-danger">Excluir</button>
                 </div>
             </div>
         </div>
@@ -903,24 +955,21 @@ function confirmarExclusao(produtoId, produtoNome) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-async function executarExclusao() {
-    if (!currentProdutoToDelete) return;
-    
+async function executarExclusao(produtoId) {
     try {
-        await fetchData(`${API_CONFIG.PRODUTOS}/${currentProdutoToDelete}`, {
+        await fetchData(`${API_CONFIG.PRODUTOS}/${produtoId}`, {
             method: 'DELETE'
         });
         
         showNotification('Produto excluído com sucesso!', 'success');
         await loadProdutosData();
         
+        const modals = document.querySelectorAll('.modal-overlay');
+        modals.forEach(modal => modal.remove());
+        
     } catch (error) {
         console.error('Erro ao excluir produto:', error);
         showNotification('Erro ao excluir produto: ' + error.message, 'error');
-    } finally {
-        currentProdutoToDelete = null;
-        const modals = document.querySelectorAll('.modal-overlay');
-        modals.forEach(modal => modal.remove());
     }
 }
 
@@ -932,32 +981,6 @@ function escapeHtml(unsafe) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-}
-
-async function fetchData(url) {
-    try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/login.html';
-            throw new Error('Não autenticado');
-        }
-        
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Erro ${response.status}: ${response.statusText}`);
-        }
-        
-        return await response.json();
-    } catch (error) {
-        console.error('Erro no fetchData:', error);
-        throw error;
-    }
 }
 
 function debounce(func, wait) {
@@ -1008,7 +1031,7 @@ function showNotification(message, type = 'info') {
         padding: 15px 20px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        border-left: 4px solid ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--error)' : 'var(--primary)'};
+        border-left: 4px solid ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
         z-index: 1000;
         max-width: 400px;
         animation: slideInRight 0.3s ease;
@@ -1017,7 +1040,7 @@ function showNotification(message, type = 'info') {
     notification.innerHTML = `
         <div class="notification-content" style="display: flex; align-items: center; gap: 10px;">
             <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}" 
-               style="color: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--error)' : 'var(--primary)'};"></i>
+               style="color: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};"></i>
             <span>${message}</span>
         </div>
     `;
@@ -1045,6 +1068,12 @@ function updateLastAccess() {
     }
 }
 
+// Inicializar view padrão (tabela)
+if (elements.tableView && elements.cardsViewContainer) {
+    elements.tableView.style.display = 'block';
+    elements.cardsViewContainer.style.display = 'none';
+}
+
 // Expor funções globais
 window.changePage = changePage;
 window.confirmarExclusao = confirmarExclusao;
@@ -1054,11 +1083,5 @@ window.mostrarDetalhesProduto = mostrarDetalhesProduto;
 window.executarExclusao = executarExclusao;
 window.fecharModalEdicao = fecharModalEdicao;
 window.fecharModalConfirmacao = fecharModalConfirmacao;
-window.excluirProdutoModal = excluirProdutoModal;
+window.excluirProduto = excluirProduto;
 window.confirmarExclusaoProduto = confirmarExclusaoProduto;
-
-// Inicializar view padrão (tabela)
-if (elements.tableView && elements.cardsViewContainer) {
-    elements.tableView.style.display = 'block';
-    elements.cardsViewContainer.style.display = 'none';
-}

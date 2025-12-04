@@ -18,6 +18,24 @@ const appState = {
 // Elementos DOM
 let elements = {};
 
+// Funções de formatação de valores
+function formatarValor(valor) {
+    if (valor === null || valor === undefined || isNaN(valor)) {
+        return 'R$ 0,00';
+    }
+    
+    // Formatar com 2 casas decimais e vírgula como separador decimal
+    return 'R$ ' + valor.toFixed(2).replace('.', ',');
+}
+
+function formatarNumero(numero) {
+    if (numero === null || numero === undefined || isNaN(numero)) {
+        return '0';
+    }
+    
+    return numero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     // Primeiro, carregar todos os elementos DOM
@@ -241,20 +259,20 @@ function updateQuickMetrics() {
     }
     
     // Total de clientes
-    elements.totalClients.textContent = appState.clientes.length;
+    elements.totalClients.textContent = formatarNumero(appState.clientes.length);
     
     // Produtos ativos
     const produtosAtivos = appState.produtos.filter(p => p.status === 'Ativo' || !p.status).length;
-    elements.totalProducts.textContent = produtosAtivos;
+    elements.totalProducts.textContent = formatarNumero(produtosAtivos);
     
     // Vendas de hoje
     const hoje = new Date().toISOString().split('T')[0];
     const vendasHoje = appState.vendas.filter(v => v.data && v.data.includes(hoje));
-    elements.salesToday.textContent = vendasHoje.length;
+    elements.salesToday.textContent = formatarNumero(vendasHoje.length);
     
     // Valor total das vendas
     const totalValor = appState.vendas.reduce((sum, v) => sum + (v.total || 0), 0);
-    elements.totalValue.textContent = `R$ ${totalValor.toFixed(2)}`;
+    elements.totalValue.textContent = formatarValor(totalValor);
 }
 
 // Gerar relatório
@@ -501,35 +519,35 @@ function updateTable(reportData) {
         if (appState.currentReport === 'clientes-top') {
             row += `
                 <td>${item.nome}</td>
-                <td>R$ ${item.totalVendas.toFixed(2)}</td>
-                <td>${item.quantidadeVendas}</td>
+                <td>${formatarValor(item.totalVendas)}</td>
+                <td>${formatarNumero(item.quantidadeVendas)}</td>
             `;
         } else if (appState.currentReport === 'produtos-top') {
             row += `
                 <td>${item.nome}</td>
-                <td>${item.vendas}</td>
-                <td>${item.estoque}</td>
-                <td>R$ ${item.preco.toFixed(2)}</td>
+                <td>${formatarNumero(item.vendas)}</td>
+                <td>${formatarNumero(item.estoque)}</td>
+                <td>${formatarValor(item.preco)}</td>
             `;
         } else if (appState.currentReport === 'vendas-periodo') {
             row += `
                 <td>${formatDateFull(item.data)}</td>
-                <td>R$ ${item.total.toFixed(2)}</td>
-                <td>${item.quantidade}</td>
+                <td>${formatarValor(item.total)}</td>
+                <td>${formatarNumero(item.quantidade)}</td>
             `;
         } else if (appState.currentReport === 'produtos-estoque') {
             row += `
                 <td>${item.nome}</td>
-                <td>${item.estoque}</td>
-                <td>R$ ${item.preco.toFixed(2)}</td>
-                <td>R$ ${item.valorTotal.toFixed(2)}</td>
+                <td>${formatarNumero(item.estoque)}</td>
+                <td>${formatarValor(item.preco)}</td>
+                <td>${formatarValor(item.valorTotal)}</td>
                 <td><span class="status-badge ${item.status === 'Ativo' ? 'status-active' : 'status-inactive'}">${item.status}</span></td>
             `;
         } else {
             // Formato genérico
             Object.values(item).forEach(val => {
                 if (typeof val === 'number' && val > 1000) {
-                    row += `<td>R$ ${val.toFixed(2)}</td>`;
+                    row += `<td>${formatarValor(val)}</td>`;
                 } else {
                     row += `<td>${val}</td>`;
                 }
@@ -554,7 +572,7 @@ function drawChart(reportData) {
         elements.mainChart.innerHTML = `
             <div class="chart-error">
                 <i class="fas fa-exclamation-triangle"></i>
-                <p>Grafícos não carregados. Recarregue a página.</p>
+                <p>Gráficos não carregados. Recarregue a página.</p>
             </div>
         `;
         return;
@@ -672,7 +690,33 @@ function exportToExcel() {
             return;
         }
         
-        const data = appState.chartData.rawData;
+        const data = appState.chartData.rawData.map(item => {
+            // Formatar os dados para Excel mantendo valores numéricos
+            const formattedItem = { ...item };
+            
+            if (item.totalVendas !== undefined) {
+                formattedItem.totalVendas = item.totalVendas;
+                formattedItem['Total Gasto (Formatado)'] = formatarValor(item.totalVendas);
+            }
+            
+            if (item.total !== undefined) {
+                formattedItem.total = item.total;
+                formattedItem['Valor Total (Formatado)'] = formatarValor(item.total);
+            }
+            
+            if (item.preco !== undefined) {
+                formattedItem.preco = item.preco;
+                formattedItem['Preço (Formatado)'] = formatarValor(item.preco);
+            }
+            
+            if (item.valorTotal !== undefined) {
+                formattedItem.valorTotal = item.valorTotal;
+                formattedItem['Valor Total (Formatado)'] = formatarValor(item.valorTotal);
+            }
+            
+            return formattedItem;
+        });
+        
         const worksheet = XLSX.utils.json_to_sheet(data);
         const workbook = XLSX.utils.book_new();
         
@@ -710,11 +754,13 @@ function exportToPDF() {
         // Preparar dados para tabela
         const tableData = appState.chartData.rawData.map(item => {
             if (appState.currentReport === 'clientes-top') {
-                return [item.nome, `R$ ${item.totalVendas.toFixed(2)}`, item.quantidadeVendas];
+                return [item.nome, formatarValor(item.totalVendas), formatarNumero(item.quantidadeVendas)];
             } else if (appState.currentReport === 'produtos-top') {
-                return [item.nome, item.vendas, item.estoque, `R$ ${item.preco.toFixed(2)}`];
+                return [item.nome, formatarNumero(item.vendas), formatarNumero(item.estoque), formatarValor(item.preco)];
             } else if (appState.currentReport === 'vendas-periodo') {
-                return [formatDateFull(item.data), `R$ ${item.total.toFixed(2)}`, item.quantidade];
+                return [formatDateFull(item.data), formatarValor(item.total), formatarNumero(item.quantidade)];
+            } else if (appState.currentReport === 'produtos-estoque') {
+                return [item.nome, formatarNumero(item.estoque), formatarValor(item.preco), formatarValor(item.valorTotal), item.status];
             }
             return Object.values(item);
         });
@@ -755,9 +801,13 @@ function exportChartData() {
         appState.chartData.columns.join(','),
         ...appState.chartData.rawData.map(item => {
             if (appState.currentReport === 'clientes-top') {
-                return `${item.nome},${item.totalVendas},${item.quantidadeVendas}`;
+                return `${item.nome},${formatarValor(item.totalVendas).replace('R$ ', '')},${item.quantidadeVendas}`;
             } else if (appState.currentReport === 'produtos-top') {
-                return `${item.nome},${item.vendas},${item.estoque},${item.preco}`;
+                return `${item.nome},${item.vendas},${item.estoque},${formatarValor(item.preco).replace('R$ ', '')}`;
+            } else if (appState.currentReport === 'vendas-periodo') {
+                return `${formatDateFull(item.data)},${formatarValor(item.total).replace('R$ ', '')},${item.quantidade}`;
+            } else if (appState.currentReport === 'produtos-estoque') {
+                return `${item.nome},${item.estoque},${formatarValor(item.preco).replace('R$ ', '')},${formatarValor(item.valorTotal).replace('R$ ', '')},${item.status}`;
             }
             return Object.values(item).join(',');
         })
@@ -805,7 +855,9 @@ function exportList(type) {
                     Nome: item.nome,
                     Descrição: item.descricao || '',
                     Preço: item.preco || 0,
+                    'Preço Formatado': item.preco ? formatarValor(item.preco) : 'R$ 0,00',
                     Estoque: item.estoque || 0,
+                    'Estoque Formatado': item.estoque ? formatarNumero(item.estoque) : '0',
                     Tipo: item.tipo || 'Produto',
                     Status: item.status || 'Ativo'
                 };
@@ -826,6 +878,7 @@ function exportList(type) {
                     Cliente: cliente ? cliente.nome : 'Desconhecido',
                     Data: item.data ? new Date(item.data).toLocaleDateString('pt-BR') : '',
                     Total: item.total || 0,
+                    'Total Formatado': item.total ? formatarValor(item.total) : 'R$ 0,00',
                     Status: item.status || 'Pendente'
                 };
             }
